@@ -102,31 +102,25 @@ jobs:
       FLUTTER_VERSION: ${{ needs.prepare.outputs.flutter_version }}
 
     steps:
-      # ---- 1. 创建引擎工作目录 ----
-      - name: 创建引擎工作目录
-        run: |
-          mkdir -p engine
-
-      # ---- 2. Checkout 源码 ----
+      # ---- 1. Checkout 源码 ----
       - name: Checkout Flutter engine fork
         uses: actions/checkout@v4
         with:
           path: engine/src/flutter
 
-      # ---- 3. 安装 depot_tools ----
+      # ---- 2. 安装 depot_tools ----
       - name: 安装 depot_tools
         run: |
           git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git $HOME/depot_tools
           echo "$HOME/depot_tools" >> $GITHUB_PATH
 
-      # ---- 4. 配置 .gclient ----
+      # ---- 3. 配置 .gclient ----
       - name: 配置 .gclient
-        working-directory: engine
         run: |
           cat > .gclient << 'EOF'
           solutions = [
             {
-              "name": "src/flutter",
+              "name": "engine/src/flutter",
               "url": "https://github.com/szyijia/flutter.git",
               "managed": False,
               "custom_deps": {},
@@ -138,9 +132,8 @@ jobs:
           ]
           EOF
 
-      # ---- 5. gclient sync ----
+      # ---- 4. gclient sync ----
       - name: gclient sync
-        working-directory: engine
         run: |
           gclient sync -D --no-history --shallow --jobs 8
         timeout-minutes: 60
