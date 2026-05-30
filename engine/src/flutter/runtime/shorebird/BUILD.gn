@@ -1,0 +1,7 @@
+# Copyright 2024 Patchwing Authors. All rights reserved.
+source_set("shorebird") {
+  sources = [
+    "shorebird_dart_stubs.cc",
+    "shorebird_dart_stubs.h",
+  ]
+}
