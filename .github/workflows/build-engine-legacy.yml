@@ -1,0 +1,290 @@
+# ============================================================================
+# Patchwing Engine Artifact 编译 - 旧版本（3.10~3.27，独立 engine 仓库）
+# ============================================================================
+# 旧版本的 Flutter engine 是独立仓库（shorebirdtech/engine → szyijia/engine）
+# 目录结构：
+#   .gclient
+#   engine/          ← checkout szyijia/engine
+#   engine/src/      ← buildroot (由 DEPS 中 "src" 指定)
+#   engine/src/flutter/  ← engine 源码本身（由 gclient 自动映射）
+#   engine/src/third_party/dart/  ← dart-sdk
+#
+# 与 monorepo（3.29+）的区别：
+#   - engine 是独立仓库，不在 flutter 仓库内
+#   - .gclient 的 solutions name 是 "src/flutter"
+#   - GN/Ninja 的工作目录是 engine/src/flutter/
+# ============================================================================
+
+name: Build Engine Legacy (3.10~3.27)
+
+on:
+  workflow_dispatch:
+    inputs:
+      flutter_version:
+        description: 'Flutter 版本号（如 3.24.5）'
+        required: true
+        default: ''
+      upload_to_minio:
+        description: '是否上传到 MinIO CDN'
+        required: false
+        type: boolean
+        default: true
+  workflow_call:
+    inputs:
+      flutter_version:
+        description: 'Flutter 版本号'
+        required: true
+        type: string
+      upload_to_minio:
+        description: '是否上传到 MinIO CDN'
+        required: false
+        type: boolean
+        default: true
+
+env:
+  FLUTTER_VERSION: ${{ inputs.flutter_version }}
+
+jobs:
+  # ========================================
+  # 准备阶段：确定 engine commit
+  # ========================================
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      flutter_version: ${{ steps.info.outputs.flutter_version }}
+      engine_commit: ${{ steps.info.outputs.engine_commit }}
+    steps:
+      - name: 输出版本信息
+        id: info
+        run: |
+          echo "flutter_version=${{ env.FLUTTER_VERSION }}" >> $GITHUB_OUTPUT
+          # engine commit 将在 build job 中获取
+          echo "engine_commit=legacy-${{ env.FLUTTER_VERSION }}" >> $GITHUB_OUTPUT
+          echo "📦 Flutter Version: ${{ env.FLUTTER_VERSION }}"
+          echo "📋 Engine Repo: szyijia/engine@flutter_release/${{ env.FLUTTER_VERSION }}"
+
+  # ========================================
+  # 编译阶段：多平台并行
+  # ========================================
+  build:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux-x64
+            gn_host_args: '--runtime-mode=release --no-goma'
+            gn_android_args: '--android --android-cpu=arm64 --runtime-mode=release --no-goma'
+            host_out_dir: host_release
+            gen_snapshot_name: gen_snapshot
+
+          - os: macos-latest
+            platform: darwin-arm64
+            gn_host_args: '--runtime-mode=release --no-goma --mac-cpu=arm64'
+            gn_android_args: '--android --android-cpu=arm64 --runtime-mode=release --no-goma'
+            host_out_dir: host_release_arm64
+            gen_snapshot_name: gen_snapshot
+
+    runs-on: ${{ matrix.os }}
+    env:
+      FLUTTER_VERSION: ${{ needs.prepare.outputs.flutter_version }}
+
+    steps:
+      # ---- 1. 安装 depot_tools ----
+      - name: 安装 depot_tools
+        run: |
+          git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git $HOME/depot_tools
+          echo "$HOME/depot_tools" >> $GITHUB_PATH
+
+      # ---- 2. 创建工作目录和 .gclient ----
+      - name: 配置 .gclient
+        run: |
+          mkdir -p engine
+          cat > engine/.gclient << 'EOF'
+          solutions = [
+            {
+              "name": "src/flutter",
+              "url": "https://github.com/szyijia/engine.git@flutter_release/${{ env.FLUTTER_VERSION }}",
+              "managed": False,
+              "custom_deps": {},
+              "custom_vars": {
+                "download_emsdk": False,
+                "release_candidate": False,
+                "download_android_deps": True,
+              },
+            },
+          ]
+          EOF
+
+      # ---- 3. gclient sync ----
+      - name: gclient sync
+        working-directory: engine
+        run: |
+          gclient sync -D --no-history --shallow --jobs 8
+        timeout-minutes: 60
+
+      # ---- 4. 安装 Rust Android 交叉编译 target ----
+      - name: 安装 Rust aarch64-linux-android target
+        run: |
+          rustup target add aarch64-linux-android
+
+      # ---- 5. 安装依赖（Linux） ----
+      - name: 安装 Linux 编译依赖
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            pkg-config \
+            ninja-build \
+            python3 \
+            libglib2.0-dev \
+            zip
+
+      # ---- 6. 编译 Android release (arm64) ----
+      - name: 编译 android_release_arm64
+        working-directory: engine/src/flutter
+        run: |
+          python3 tools/gn ${{ matrix.gn_android_args }}
+          ninja -C ../out/android_release_arm64 flutter/lib/snapshot:generate_snapshot_bin flutter.jar
+        timeout-minutes: 90
+
+      # ---- 7. 编译 Host release (gen_snapshot) ----
+      - name: 编译 host_release
+        working-directory: engine/src/flutter
+        run: |
+          python3 tools/gn ${{ matrix.gn_host_args }}
+          ninja -C ../out/${{ matrix.host_out_dir }} gen_snapshot
+        timeout-minutes: 60
+
+      # ---- 8. 打包 artifact ----
+      - name: 打包 Engine Artifact
+        id: package
+        run: |
+          ARTIFACT_NAME="patchwing-engine-${FLUTTER_VERSION}-${{ matrix.platform }}"
+          PACK_DIR="artifact/${ARTIFACT_NAME}"
+
+          mkdir -p "${PACK_DIR}/android_release_arm64"
+          mkdir -p "${PACK_DIR}/host_release"
+
+          # 复制 flutter.jar
+          cp engine/src/out/android_release_arm64/flutter.jar "${PACK_DIR}/android_release_arm64/"
+
+          # 复制 gen_snapshot
+          cp engine/src/out/${{ matrix.host_out_dir }}/${{ matrix.gen_snapshot_name }} "${PACK_DIR}/host_release/gen_snapshot"
+          chmod +x "${PACK_DIR}/host_release/gen_snapshot"
+
+          # 计算 hash
+          JAR_SHA=$(shasum -a 256 "${PACK_DIR}/android_release_arm64/flutter.jar" | awk '{print $1}')
+          JAR_SIZE=$(wc -c < "${PACK_DIR}/android_release_arm64/flutter.jar" | tr -d ' ')
+          GS_SHA=$(shasum -a 256 "${PACK_DIR}/host_release/gen_snapshot" | awk '{print $1}')
+          GS_SIZE=$(wc -c < "${PACK_DIR}/host_release/gen_snapshot" | tr -d ' ')
+
+          # 获取 engine commit
+          ENGINE_COMMIT=$(cd engine/src/flutter && git rev-parse HEAD)
+
+          # 生成元数据
+          cat > "${PACK_DIR}/patchwing.json" << EOF
+          {
+            "schema_version": 1,
+            "flutter_version": "${FLUTTER_VERSION}",
+            "platform": "${{ matrix.platform }}",
+            "engine_commit": "${ENGINE_COMMIT}",
+            "engine_type": "legacy",
+            "created_at": "$(date -u '+%Y-%m-%dT%H:%M:%SZ')",
+            "files": {
+              "flutter.jar": {
+                "path": "android_release_arm64/flutter.jar",
+                "size": ${JAR_SIZE},
+                "sha256": "${JAR_SHA}"
+              },
+              "gen_snapshot": {
+                "path": "host_release/gen_snapshot",
+                "size": ${GS_SIZE},
+                "sha256": "${GS_SHA}"
+              }
+            }
+          }
+          EOF
+
+          # 打包 zip
+          cd artifact
+          zip -r "../${ARTIFACT_NAME}.zip" "${ARTIFACT_NAME}/"
+          cd ..
+
+          echo "artifact_name=${ARTIFACT_NAME}" >> $GITHUB_OUTPUT
+          echo "zip_path=${ARTIFACT_NAME}.zip" >> $GITHUB_OUTPUT
+
+      # ---- 9. 上传到 GitHub Artifacts ----
+      - name: 上传 GitHub Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.artifact_name }}
+          path: ${{ steps.package.outputs.zip_path }}
+          retention-days: 30
+
+  # ========================================
+  # 发布阶段：上传到 MinIO CDN
+  # ========================================
+  release:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    if: always() && needs.prepare.result == 'success' && !cancelled()
+    env:
+      FLUTTER_VERSION: ${{ needs.prepare.outputs.flutter_version }}
+
+    steps:
+      - name: 下载所有平台 artifact
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: 列出产物
+        run: |
+          echo "=== 编译产物 ==="
+          find artifacts/ -name "*.zip" -exec ls -lh {} \;
+
+      - name: 安装 MinIO Client (mc)
+        run: |
+          curl -sSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
+          chmod +x /usr/local/bin/mc
+
+      - name: 配置 MinIO
+        run: |
+          mc alias set patchwing \
+            "${{ secrets.MINIO_ENDPOINT }}" \
+            "${{ secrets.MINIO_ACCESS_KEY }}" \
+            "${{ secrets.MINIO_SECRET_KEY }}"
+
+      - name: 上传到 MinIO CDN
+        run: |
+          CDN_PATH="patchwing/engine/${FLUTTER_VERSION}"
+          mc mb --ignore-existing patchwing/patchwing
+
+          for zip in artifacts/patchwing-engine-*/patchwing-engine-*.zip; do
+            if [ -f "$zip" ]; then
+              FILENAME=$(basename "$zip")
+              echo "上传: ${FILENAME} → ${CDN_PATH}/"
+              mc cp "$zip" "patchwing/${CDN_PATH}/${FILENAME}"
+
+              SHA=$(sha256sum "$zip" | awk '{print $1}')
+              echo "$SHA" > "${zip}.sha256"
+              mc cp "${zip}.sha256" "patchwing/${CDN_PATH}/${FILENAME}.sha256"
+            fi
+          done
+
+          cat > /tmp/latest.json << EOF
+          {
+            "flutter_version": "${FLUTTER_VERSION}",
+            "engine_type": "legacy",
+            "platforms": ["linux-x64", "darwin-arm64"],
+            "created_at": "$(date -u '+%Y-%m-%dT%H:%M:%SZ')",
+            "base_url": "http://116.204.74.120:29000/patchwing/engine/${FLUTTER_VERSION}"
+          }
+          EOF
+          mc cp /tmp/latest.json "patchwing/${CDN_PATH}/latest.json"
+
+          echo ""
+          echo "✅ 上传完成！"
+          echo "  URL: http://116.204.74.120:29000/patchwing/engine/${FLUTTER_VERSION}/"

@@ -150,26 +150,38 @@ jobs:
 
     steps:
       - name: "📋 构建信息: ${{ matrix.flutter_version }} / ${{ matrix.platform.name }}"
+        id: info
         run: |
           echo "🔨 Flutter Version: ${{ matrix.flutter_version }}"
           echo "🖥️  Platform: ${{ matrix.platform.name }}"
           echo "🏃 Runner: ${{ matrix.platform.os }}"
 
-      # ---- 1. Checkout 对应版本分支 ----
-      - name: Checkout Flutter engine fork
-        uses: actions/checkout@v4
-        with:
-          ref: flutter_release/${{ matrix.flutter_version }}
-          path: repo
+          # 判断版本类型：3.29+ 为 monorepo，3.10~3.27 为 legacy（独立 engine 仓库）
+          MINOR=$(echo "${{ matrix.flutter_version }}" | cut -d. -f2)
+          if [ "$MINOR" -ge 29 ]; then
+            echo "engine_type=monorepo" >> $GITHUB_OUTPUT
+            echo "📦 类型: Monorepo (3.29+)"
+          else
+            echo "engine_type=legacy" >> $GITHUB_OUTPUT
+            echo "📦 类型: Legacy (独立 engine 仓库)"
+          fi
 
-      # ---- 2. 安装 depot_tools ----
+      # ---- 1. 安装 depot_tools ----
       - name: 安装 depot_tools
         run: |
           git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git $HOME/depot_tools
           echo "$HOME/depot_tools" >> $GITHUB_PATH
 
-      # ---- 3. 配置 .gclient ----
-      - name: 配置 .gclient
+      # ---- 2. Checkout + 配置 .gclient（Monorepo 3.29+） ----
+      - name: Checkout Flutter monorepo
+        if: steps.info.outputs.engine_type == 'monorepo'
+        uses: actions/checkout@v4
+        with:
+          ref: flutter_release/${{ matrix.flutter_version }}
+          path: repo
+
+      - name: 配置 .gclient (monorepo)
+        if: steps.info.outputs.engine_type == 'monorepo'
         working-directory: repo
         run: |
           cat > .gclient << 'EOF'
@@ -188,12 +200,50 @@ jobs:
           ]
           EOF
 
-      # ---- 4. gclient sync ----
-      - name: gclient sync
+      - name: gclient sync (monorepo)
+        if: steps.info.outputs.engine_type == 'monorepo'
         working-directory: repo
         run: |
           gclient sync -D --no-history --shallow --jobs 8
         timeout-minutes: 60
+
+      # ---- 2b. Checkout + 配置 .gclient（Legacy 3.10~3.27，独立 engine 仓库） ----
+      - name: 配置 .gclient (legacy)
+        if: steps.info.outputs.engine_type == 'legacy'
+        run: |
+          mkdir -p repo
+          cat > repo/.gclient << 'EOF'
+          solutions = [
+            {
+              "name": "src/flutter",
+              "url": "https://github.com/szyijia/engine.git@flutter_release/${{ matrix.flutter_version }}",
+              "managed": False,
+              "custom_deps": {},
+              "custom_vars": {
+                "download_emsdk": False,
+                "release_candidate": False,
+                "download_android_deps": True,
+              },
+            },
+          ]
+          EOF
+
+      - name: gclient sync (legacy)
+        if: steps.info.outputs.engine_type == 'legacy'
+        working-directory: repo
+        run: |
+          gclient sync -D --no-history --shallow --jobs 8
+        timeout-minutes: 60
+
+      # ---- 3. 统一目录结构：确保 repo/engine/src/flutter 路径可用 ----
+      - name: 统一目录结构 (legacy)
+        if: steps.info.outputs.engine_type == 'legacy'
+        run: |
+          # Legacy 结构: repo/src/flutter/ → 创建软链接使路径统一
+          # gclient sync 后目录为: repo/src/flutter/ (engine源码)
+          # 需要映射为: repo/engine/src/flutter/ (与 monorepo 一致)
+          mkdir -p repo/engine
+          ln -sf "$(pwd)/repo/src" repo/engine/src
 
       # ---- 5. 安装 Rust Android 交叉编译 target ----
       - name: 安装 Rust aarch64-linux-android target
@@ -214,16 +264,34 @@ jobs:
             zip
 
       # ---- 7. 编译 Android release (arm64) ----
-      - name: 编译 android_release_arm64
+      - name: 编译 android_release_arm64 (monorepo)
+        if: steps.info.outputs.engine_type == 'monorepo'
         working-directory: repo/engine/src/flutter
         run: |
           python3 tools/gn ${{ matrix.platform.gn_android_args }}
           ninja -C ../out/android_release_arm64 flutter/lib/snapshot:generate_snapshot_bin flutter.jar
         timeout-minutes: 90
 
+      - name: 编译 android_release_arm64 (legacy)
+        if: steps.info.outputs.engine_type == 'legacy'
+        working-directory: repo/src/flutter
+        run: |
+          python3 tools/gn ${{ matrix.platform.gn_android_args }}
+          ninja -C ../out/android_release_arm64 flutter/lib/snapshot:generate_snapshot_bin flutter.jar
+        timeout-minutes: 90
+
       # ---- 8. 编译 Host release (gen_snapshot) ----
-      - name: 编译 host_release
+      - name: 编译 host_release (monorepo)
+        if: steps.info.outputs.engine_type == 'monorepo'
         working-directory: repo/engine/src/flutter
+        run: |
+          python3 tools/gn ${{ matrix.platform.gn_host_args }}
+          ninja -C ../out/${{ matrix.platform.host_out_dir }} gen_snapshot
+        timeout-minutes: 60
+
+      - name: 编译 host_release (legacy)
+        if: steps.info.outputs.engine_type == 'legacy'
+        working-directory: repo/src/flutter
         run: |
           python3 tools/gn ${{ matrix.platform.gn_host_args }}
           ninja -C ../out/${{ matrix.platform.host_out_dir }} gen_snapshot
@@ -239,11 +307,18 @@ jobs:
           mkdir -p "${PACK_DIR}/android_release_arm64"
           mkdir -p "${PACK_DIR}/host_release"
 
+          # 根据版本类型确定输出目录
+          if [ "${{ steps.info.outputs.engine_type }}" = "monorepo" ]; then
+            OUT_DIR="repo/engine/src/out"
+          else
+            OUT_DIR="repo/src/out"
+          fi
+
           # 复制 flutter.jar
-          cp repo/engine/src/out/android_release_arm64/flutter.jar "${PACK_DIR}/android_release_arm64/"
+          cp "${OUT_DIR}/android_release_arm64/flutter.jar" "${PACK_DIR}/android_release_arm64/"
 
           # 复制 gen_snapshot
-          cp repo/engine/src/out/${{ matrix.platform.host_out_dir }}/gen_snapshot "${PACK_DIR}/host_release/gen_snapshot"
+          cp "${OUT_DIR}/${{ matrix.platform.host_out_dir }}/gen_snapshot" "${PACK_DIR}/host_release/gen_snapshot"
           chmod +x "${PACK_DIR}/host_release/gen_snapshot"
 
           # 计算 hash
