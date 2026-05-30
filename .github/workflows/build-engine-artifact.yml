@@ -103,10 +103,11 @@ jobs:
 
     steps:
       # ---- 1. Checkout 源码 ----
+      # 使用与本地相同的目录结构：.gclient 和 DEPS 在同一目录，name="."
       - name: Checkout Flutter engine fork
         uses: actions/checkout@v4
         with:
-          path: engine/src/flutter
+          path: repo
 
       # ---- 2. 安装 depot_tools ----
       - name: 安装 depot_tools
@@ -116,17 +117,19 @@ jobs:
 
       # ---- 3. 配置 .gclient ----
       - name: 配置 .gclient
+        working-directory: repo
         run: |
           cat > .gclient << 'EOF'
           solutions = [
             {
-              "name": "engine/src/flutter",
+              "name": ".",
               "url": "https://github.com/szyijia/flutter.git",
               "managed": False,
               "custom_deps": {},
               "custom_vars": {
                 "download_emsdk": False,
                 "release_candidate": False,
+                "download_android_deps": True,
               },
             },
           ]
@@ -134,6 +137,7 @@ jobs:
 
       # ---- 4. gclient sync ----
       - name: gclient sync
+        working-directory: repo
         run: |
           gclient sync -D --no-history --shallow --jobs 8
         timeout-minutes: 60
@@ -153,8 +157,8 @@ jobs:
 
       # ---- 7. 编译 Android release (arm64) ----
       - name: 编译 android_release_arm64
+        working-directory: repo/engine/src/flutter
         run: |
-          cd engine/src/flutter
           # 运行 GN 生成构建文件
           python3 tools/gn ${{ matrix.gn_android_args }}
           # Ninja 编译
@@ -163,8 +167,8 @@ jobs:
 
       # ---- 8. 编译 Host release (gen_snapshot) ----
       - name: 编译 host_release
+        working-directory: repo/engine/src/flutter
         run: |
-          cd engine/src/flutter
           python3 tools/gn ${{ matrix.gn_host_args }}
           ninja -C ../out/host_release gen_snapshot
         timeout-minutes: 60
@@ -180,10 +184,10 @@ jobs:
           mkdir -p "${PACK_DIR}/host_release"
 
           # 复制 flutter.jar
-          cp engine/src/out/android_release_arm64/flutter.jar "${PACK_DIR}/android_release_arm64/"
+          cp repo/engine/src/out/android_release_arm64/flutter.jar "${PACK_DIR}/android_release_arm64/"
 
           # 复制 gen_snapshot
-          cp engine/src/out/host_release/${{ matrix.gen_snapshot_name }} "${PACK_DIR}/host_release/gen_snapshot"
+          cp repo/engine/src/out/host_release/${{ matrix.gen_snapshot_name }} "${PACK_DIR}/host_release/gen_snapshot"
           chmod +x "${PACK_DIR}/host_release/gen_snapshot"
 
           # 计算 hash
