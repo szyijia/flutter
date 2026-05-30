@@ -160,12 +160,14 @@ jobs:
       - name: 编译 linux-arm64（Docker）
         run: |
           mkdir -p build/cli
+          # 只挂载 cli/ 目录，避免仓库根目录的 workspace pubspec.yaml 被 Dart 解析
           docker run --rm \
             --platform linux/arm64 \
-            -v "${{ github.workspace }}:/app" \
-            -w /app/cli \
+            -v "${{ github.workspace }}/cli:/cli" \
+            -v "${{ github.workspace }}/build/cli:/output" \
+            -w /cli \
             dart:stable \
-            bash -c "dart pub get --no-precompile && dart compile exe bin/pw.dart -o /app/build/cli/pw-linux-arm64 -D version=${{ steps.version.outputs.version }}"
+            bash -c "dart pub get --no-precompile && dart compile exe bin/pw.dart -o /output/pw-linux-arm64 -D version=${{ steps.version.outputs.version }}"
           chmod +x build/cli/pw-linux-arm64
           echo "✅ linux-arm64 编译完成"
           file build/cli/pw-linux-arm64
