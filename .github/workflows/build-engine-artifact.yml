@@ -102,7 +102,7 @@ jobs:
             host_out_dir: host_release
             gen_snapshot_name: gen_snapshot
 
-          - os: macos-14  # Apple Silicon
+          - os: macos-latest
             platform: darwin-arm64
             gn_host_args: '--runtime-mode=release --no-goma --mac-cpu=arm64'
             gn_android_args: '--android --android-cpu=arm64 --runtime-mode=release --no-goma'
@@ -119,6 +119,7 @@ jobs:
       - name: Checkout Flutter engine fork
         uses: actions/checkout@v4
         with:
+          ref: flutter_release/${{ env.FLUTTER_VERSION }}
           path: repo
 
       # ---- 2. 安装 depot_tools ----
@@ -135,7 +136,7 @@ jobs:
           solutions = [
             {
               "name": ".",
-              "url": "https://github.com/szyijia/flutter.git",
+              "url": "https://github.com/szyijia/flutter.git@flutter_release/${{ env.FLUTTER_VERSION }}",
               "managed": False,
               "custom_deps": {},
               "custom_vars": {
