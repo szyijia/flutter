@@ -60,7 +60,15 @@ jobs:
           mc alias set patchwing \
             "${{ secrets.MINIO_ENDPOINT }}" \
             "${{ secrets.MINIO_ACCESS_KEY }}" \
-            "${{ secrets.MINIO_SECRET_KEY }}" || true
+            "${{ secrets.MINIO_SECRET_KEY }}"
+          # 验证连接是否成功
+          if ! mc ls patchwing/ >/dev/null 2>&1; then
+            echo "⚠️  MinIO 连接失败，将跳过 skip_existing 检查，构建所有版本"
+            echo "MINIO_CONNECTED=false" >> $GITHUB_ENV
+          else
+            echo "✅ MinIO 连接成功"
+            echo "MINIO_CONNECTED=true" >> $GITHUB_ENV
+          fi
 
       - name: 发现版本列表
         id: versions
@@ -74,13 +82,19 @@ jobs:
             ALL_VERSIONS=$(echo "$ALL_VERSIONS" | grep -E "$FILTER" || true)
           fi
 
-          # 跳过已存在的版本
-          if [ "${{ inputs.skip_existing }}" = "true" ]; then
+          # 跳过已存在的版本（仅在 MinIO 连接成功时）
+          if [ "${{ inputs.skip_existing }}" = "true" ] && [ "${MINIO_CONNECTED}" = "true" ]; then
             FILTERED_VERSIONS=""
             for ver in $ALL_VERSIONS; do
               # 检查 MinIO 上是否已有该版本的 linux-x64 和 darwin-arm64
-              LINUX_EXISTS=$(mc ls "patchwing/patchwing/engine/${ver}/patchwing-engine-${ver}-linux-x64.zip" 2>/dev/null && echo "yes" || echo "no")
-              DARWIN_EXISTS=$(mc ls "patchwing/patchwing/engine/${ver}/patchwing-engine-${ver}-darwin-arm64.zip" 2>/dev/null && echo "yes" || echo "no")
+              LINUX_EXISTS="no"
+              DARWIN_EXISTS="no"
+              if mc stat "patchwing/patchwing/engine/${ver}/patchwing-engine-${ver}-linux-x64.zip" >/dev/null 2>&1; then
+                LINUX_EXISTS="yes"
+              fi
+              if mc stat "patchwing/patchwing/engine/${ver}/patchwing-engine-${ver}-darwin-arm64.zip" >/dev/null 2>&1; then
+                DARWIN_EXISTS="yes"
+              fi
 
               if [ "$LINUX_EXISTS" = "yes" ] && [ "$DARWIN_EXISTS" = "yes" ]; then
                 echo "⏭️  跳过已存在: ${ver}"
