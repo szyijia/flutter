@@ -254,7 +254,7 @@ jobs:
   release:
     needs: [prepare, build]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.upload_to_minio == 'true')
+    if: always() && needs.prepare.result == 'success' && !cancelled() && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.upload_to_minio == 'true'))
     env:
       FLUTTER_VERSION: ${{ needs.prepare.outputs.flutter_version }}
 
