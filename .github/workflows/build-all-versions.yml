@@ -1,0 +1,371 @@
+# ============================================================================
+# Patchwing Engine Artifact 批量构建
+# ============================================================================
+# 功能：
+#   遍历所有 flutter_release/* 分支，为每个版本独立触发编译。
+#   任何一个版本失败不会影响其他版本的构建。
+#
+# 触发条件：
+#   手动触发（workflow_dispatch）
+#
+# 参数：
+#   - version_filter: 版本过滤（正则），留空则构建全部版本
+#   - skip_existing: 是否跳过 MinIO 上已存在的版本
+# ============================================================================
+
+name: Build All Versions
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_filter:
+        description: '版本过滤正则（如 "3\\.4[0-9]"），留空则构建全部版本'
+        required: false
+        default: ''
+      skip_existing:
+        description: '跳过 MinIO 上已存在的版本'
+        required: false
+        type: boolean
+        default: true
+      upload_to_minio:
+        description: '是否上传到 MinIO CDN'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  # ========================================
+  # 发现所有需要构建的版本
+  # ========================================
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      versions: ${{ steps.versions.outputs.versions }}
+      count: ${{ steps.versions.outputs.count }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 安装 MinIO Client
+        if: inputs.skip_existing
+        run: |
+          curl -sSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
+          chmod +x /usr/local/bin/mc
+
+      - name: 配置 MinIO
+        if: inputs.skip_existing
+        run: |
+          mc alias set patchwing \
+            "${{ secrets.MINIO_ENDPOINT }}" \
+            "${{ secrets.MINIO_ACCESS_KEY }}" \
+            "${{ secrets.MINIO_SECRET_KEY }}" || true
+
+      - name: 发现版本列表
+        id: versions
+        run: |
+          # 获取所有 flutter_release/* 分支的版本号
+          ALL_VERSIONS=$(git branch -r | grep 'origin/flutter_release/' | grep -v '_ex/' | sed 's|.*origin/flutter_release/||' | sort -t. -k1,1n -k2,2n -k3,3n)
+
+          # 应用版本过滤
+          FILTER="${{ inputs.version_filter }}"
+          if [ -n "$FILTER" ]; then
+            ALL_VERSIONS=$(echo "$ALL_VERSIONS" | grep -E "$FILTER" || true)
+          fi
+
+          # 跳过已存在的版本
+          if [ "${{ inputs.skip_existing }}" = "true" ]; then
+            FILTERED_VERSIONS=""
+            for ver in $ALL_VERSIONS; do
+              # 检查 MinIO 上是否已有该版本的 linux-x64 和 darwin-arm64
+              LINUX_EXISTS=$(mc ls "patchwing/patchwing/engine/${ver}/patchwing-engine-${ver}-linux-x64.zip" 2>/dev/null && echo "yes" || echo "no")
+              DARWIN_EXISTS=$(mc ls "patchwing/patchwing/engine/${ver}/patchwing-engine-${ver}-darwin-arm64.zip" 2>/dev/null && echo "yes" || echo "no")
+
+              if [ "$LINUX_EXISTS" = "yes" ] && [ "$DARWIN_EXISTS" = "yes" ]; then
+                echo "⏭️  跳过已存在: ${ver}"
+              else
+                FILTERED_VERSIONS="${FILTERED_VERSIONS} ${ver}"
+                echo "📦 需要构建: ${ver} (linux=${LINUX_EXISTS}, darwin=${DARWIN_EXISTS})"
+              fi
+            done
+            ALL_VERSIONS=$(echo "$FILTERED_VERSIONS" | xargs)
+          fi
+
+          # 转换为 JSON 数组
+          if [ -z "$ALL_VERSIONS" ]; then
+            echo "⚠️  没有需要构建的版本"
+            echo 'versions=[]' >> $GITHUB_OUTPUT
+            echo 'count=0' >> $GITHUB_OUTPUT
+          else
+            JSON_ARRAY=$(echo "$ALL_VERSIONS" | tr ' ' '\n' | jq -R . | jq -s -c .)
+            COUNT=$(echo "$ALL_VERSIONS" | wc -w | tr -d ' ')
+            echo "versions=${JSON_ARRAY}" >> $GITHUB_OUTPUT
+            echo "count=${COUNT}" >> $GITHUB_OUTPUT
+            echo ""
+            echo "✅ 共 ${COUNT} 个版本需要构建:"
+            echo "$ALL_VERSIONS" | tr ' ' '\n'
+          fi
+
+  # ========================================
+  # 为每个版本独立构建（互不影响）
+  # ========================================
+  build-version:
+    needs: discover
+    if: needs.discover.outputs.count != '0'
+    strategy:
+      fail-fast: false  # 关键：任何一个版本失败不影响其他版本
+      max-parallel: 4   # 控制并发数，避免资源耗尽
+      matrix:
+        flutter_version: ${{ fromJson(needs.discover.outputs.versions) }}
+        platform:
+          - os: ubuntu-latest
+            name: linux-x64
+            gn_host_args: '--runtime-mode=release --no-goma'
+            gn_android_args: '--android --android-cpu=arm64 --runtime-mode=release --no-goma'
+            host_out_dir: host_release
+          - os: macos-14
+            name: darwin-arm64
+            gn_host_args: '--runtime-mode=release --no-goma --mac-cpu=arm64'
+            gn_android_args: '--android --android-cpu=arm64 --runtime-mode=release --no-goma'
+            host_out_dir: host_release_arm64
+
+    runs-on: ${{ matrix.platform.os }}
+    env:
+      FLUTTER_VERSION: ${{ matrix.flutter_version }}
+
+    steps:
+      - name: "📋 构建信息: ${{ matrix.flutter_version }} / ${{ matrix.platform.name }}"
+        run: |
+          echo "🔨 Flutter Version: ${{ matrix.flutter_version }}"
+          echo "🖥️  Platform: ${{ matrix.platform.name }}"
+          echo "🏃 Runner: ${{ matrix.platform.os }}"
+
+      # ---- 1. Checkout 对应版本分支 ----
+      - name: Checkout Flutter engine fork
+        uses: actions/checkout@v4
+        with:
+          ref: flutter_release/${{ matrix.flutter_version }}
+          path: repo
+
+      # ---- 2. 安装 depot_tools ----
+      - name: 安装 depot_tools
+        run: |
+          git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git $HOME/depot_tools
+          echo "$HOME/depot_tools" >> $GITHUB_PATH
+
+      # ---- 3. 配置 .gclient ----
+      - name: 配置 .gclient
+        working-directory: repo
+        run: |
+          cat > .gclient << 'EOF'
+          solutions = [
+            {
+              "name": ".",
+              "url": "https://github.com/szyijia/flutter.git@flutter_release/${{ matrix.flutter_version }}",
+              "managed": False,
+              "custom_deps": {},
+              "custom_vars": {
+                "download_emsdk": False,
+                "release_candidate": False,
+                "download_android_deps": True,
+              },
+            },
+          ]
+          EOF
+
+      # ---- 4. gclient sync ----
+      - name: gclient sync
+        working-directory: repo
+        run: |
+          gclient sync -D --no-history --shallow --jobs 8
+        timeout-minutes: 60
+
+      # ---- 5. 安装 Rust Android 交叉编译 target ----
+      - name: 安装 Rust aarch64-linux-android target
+        run: |
+          rustup target add aarch64-linux-android
+
+      # ---- 6. 安装依赖（Linux） ----
+      - name: 安装 Linux 编译依赖
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            pkg-config \
+            ninja-build \
+            python3 \
+            libglib2.0-dev \
+            zip
+
+      # ---- 7. 编译 Android release (arm64) ----
+      - name: 编译 android_release_arm64
+        working-directory: repo/engine/src/flutter
+        run: |
+          python3 tools/gn ${{ matrix.platform.gn_android_args }}
+          ninja -C ../out/android_release_arm64 flutter/lib/snapshot:generate_snapshot_bin flutter.jar
+        timeout-minutes: 90
+
+      # ---- 8. 编译 Host release (gen_snapshot) ----
+      - name: 编译 host_release
+        working-directory: repo/engine/src/flutter
+        run: |
+          python3 tools/gn ${{ matrix.platform.gn_host_args }}
+          ninja -C ../out/${{ matrix.platform.host_out_dir }} gen_snapshot
+        timeout-minutes: 60
+
+      # ---- 9. 打包 artifact ----
+      - name: 打包 Engine Artifact
+        id: package
+        run: |
+          ARTIFACT_NAME="patchwing-engine-${FLUTTER_VERSION}-${{ matrix.platform.name }}"
+          PACK_DIR="artifact/${ARTIFACT_NAME}"
+
+          mkdir -p "${PACK_DIR}/android_release_arm64"
+          mkdir -p "${PACK_DIR}/host_release"
+
+          # 复制 flutter.jar
+          cp repo/engine/src/out/android_release_arm64/flutter.jar "${PACK_DIR}/android_release_arm64/"
+
+          # 复制 gen_snapshot
+          cp repo/engine/src/out/${{ matrix.platform.host_out_dir }}/gen_snapshot "${PACK_DIR}/host_release/gen_snapshot"
+          chmod +x "${PACK_DIR}/host_release/gen_snapshot"
+
+          # 计算 hash
+          JAR_SHA=$(shasum -a 256 "${PACK_DIR}/android_release_arm64/flutter.jar" | awk '{print $1}')
+          JAR_SIZE=$(wc -c < "${PACK_DIR}/android_release_arm64/flutter.jar" | tr -d ' ')
+          GS_SHA=$(shasum -a 256 "${PACK_DIR}/host_release/gen_snapshot" | awk '{print $1}')
+          GS_SIZE=$(wc -c < "${PACK_DIR}/host_release/gen_snapshot" | tr -d ' ')
+
+          # 生成元数据
+          ENGINE_COMMIT=$(cd repo && git rev-parse HEAD)
+          cat > "${PACK_DIR}/patchwing.json" << EOF
+          {
+            "schema_version": 1,
+            "flutter_version": "${FLUTTER_VERSION}",
+            "platform": "${{ matrix.platform.name }}",
+            "engine_commit": "${ENGINE_COMMIT}",
+            "created_at": "$(date -u '+%Y-%m-%dT%H:%M:%SZ')",
+            "files": {
+              "flutter.jar": {
+                "path": "android_release_arm64/flutter.jar",
+                "size": ${JAR_SIZE},
+                "sha256": "${JAR_SHA}"
+              },
+              "gen_snapshot": {
+                "path": "host_release/gen_snapshot",
+                "size": ${GS_SIZE},
+                "sha256": "${GS_SHA}"
+              }
+            }
+          }
+          EOF
+
+          # 打包 zip
+          cd artifact
+          zip -r "../${ARTIFACT_NAME}.zip" "${ARTIFACT_NAME}/"
+          cd ..
+
+          echo "artifact_name=${ARTIFACT_NAME}" >> $GITHUB_OUTPUT
+          echo "zip_path=${ARTIFACT_NAME}.zip" >> $GITHUB_OUTPUT
+
+      # ---- 10. 上传到 GitHub Artifacts ----
+      - name: 上传 GitHub Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.artifact_name }}
+          path: ${{ steps.package.outputs.zip_path }}
+          retention-days: 7
+
+  # ========================================
+  # 发布阶段：统一上传到 MinIO
+  # ========================================
+  upload:
+    needs: [discover, build-version]
+    if: always() && needs.discover.outputs.count != '0' && !cancelled()
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        flutter_version: ${{ fromJson(needs.discover.outputs.versions) }}
+
+    steps:
+      - name: 下载该版本的 artifact
+        uses: actions/download-artifact@v4
+        with:
+          pattern: patchwing-engine-${{ matrix.flutter_version }}-*
+          path: artifacts/
+          merge-multiple: false
+
+      - name: 检查是否有产物
+        id: check
+        run: |
+          if find artifacts/ -name "*.zip" | grep -q .; then
+            echo "has_artifacts=true" >> $GITHUB_OUTPUT
+            echo "✅ 找到 ${{ matrix.flutter_version }} 的编译产物"
+            find artifacts/ -name "*.zip" -exec ls -lh {} \;
+          else
+            echo "has_artifacts=false" >> $GITHUB_OUTPUT
+            echo "⚠️  ${{ matrix.flutter_version }} 没有编译产物（可能编译失败）"
+          fi
+
+      - name: 安装 MinIO Client
+        if: steps.check.outputs.has_artifacts == 'true' && inputs.upload_to_minio
+        run: |
+          curl -sSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
+          chmod +x /usr/local/bin/mc
+
+      - name: 配置 MinIO
+        if: steps.check.outputs.has_artifacts == 'true' && inputs.upload_to_minio
+        run: |
+          mc alias set patchwing \
+            "${{ secrets.MINIO_ENDPOINT }}" \
+            "${{ secrets.MINIO_ACCESS_KEY }}" \
+            "${{ secrets.MINIO_SECRET_KEY }}"
+
+      - name: 上传到 MinIO CDN
+        if: steps.check.outputs.has_artifacts == 'true' && inputs.upload_to_minio
+        run: |
+          VERSION="${{ matrix.flutter_version }}"
+          CDN_PATH="patchwing/engine/${VERSION}"
+
+          # 确保 bucket 存在
+          mc mb --ignore-existing patchwing/patchwing
+
+          for zip in artifacts/patchwing-engine-*/patchwing-engine-*.zip; do
+            if [ -f "$zip" ]; then
+              FILENAME=$(basename "$zip")
+              echo "上传: ${FILENAME} → ${CDN_PATH}/"
+              mc cp "$zip" "patchwing/${CDN_PATH}/${FILENAME}"
+
+              # 生成 sha256 文件
+              SHA=$(sha256sum "$zip" | awk '{print $1}')
+              echo "$SHA" > "${zip}.sha256"
+              mc cp "${zip}.sha256" "patchwing/${CDN_PATH}/${FILENAME}.sha256"
+            fi
+          done
+
+          echo "✅ ${VERSION} 上传完成"
+
+  # ========================================
+  # 汇总报告
+  # ========================================
+  summary:
+    needs: [discover, build-version, upload]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: 构建结果汇总
+        run: |
+          echo "# 🏗️ 批量构建结果汇总"
+          echo ""
+          echo "- 📊 计划构建版本数: ${{ needs.discover.outputs.count }}"
+          echo "- 🔨 构建阶段状态: ${{ needs.build-version.result }}"
+          echo "- 📤 上传阶段状态: ${{ needs.upload.result }}"
+          echo ""
+          if [ "${{ needs.build-version.result }}" = "success" ]; then
+            echo "✅ 所有版本构建成功！"
+          elif [ "${{ needs.build-version.result }}" = "failure" ]; then
+            echo "⚠️  部分版本构建失败，但其他版本不受影响。请检查具体失败的 job。"
+          fi
