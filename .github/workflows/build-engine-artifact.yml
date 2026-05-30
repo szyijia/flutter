@@ -102,20 +102,26 @@ jobs:
       FLUTTER_VERSION: ${{ needs.prepare.outputs.flutter_version }}
 
     steps:
-      # ---- 1. Checkout 源码 ----
+      # ---- 1. 创建引擎工作目录 ----
+      - name: 创建引擎工作目录
+        run: |
+          mkdir -p engine
+
+      # ---- 2. Checkout 源码 ----
       - name: Checkout Flutter engine fork
         uses: actions/checkout@v4
         with:
-          path: src/flutter
+          path: engine/src/flutter
 
-      # ---- 2. 安装 depot_tools ----
+      # ---- 3. 安装 depot_tools ----
       - name: 安装 depot_tools
         run: |
           git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git $HOME/depot_tools
           echo "$HOME/depot_tools" >> $GITHUB_PATH
 
-      # ---- 3. 配置 .gclient ----
+      # ---- 4. 配置 .gclient ----
       - name: 配置 .gclient
+        working-directory: engine
         run: |
           cat > .gclient << 'EOF'
           solutions = [
@@ -132,13 +138,14 @@ jobs:
           ]
           EOF
 
-      # ---- 4. gclient sync ----
+      # ---- 5. gclient sync ----
       - name: gclient sync
+        working-directory: engine
         run: |
           gclient sync -D --no-history --shallow --jobs 8
         timeout-minutes: 60
 
-      # ---- 5. 安装依赖（Linux） ----
+      # ---- 6. 安装依赖（Linux） ----
       - name: 安装 Linux 编译依赖
         if: runner.os == 'Linux'
         run: |
@@ -151,25 +158,25 @@ jobs:
             libglib2.0-dev \
             zip
 
-      # ---- 6. 编译 Android release (arm64) ----
+      # ---- 7. 编译 Android release (arm64) ----
       - name: 编译 android_release_arm64
         run: |
-          cd src/flutter
+          cd engine/src/flutter
           # 运行 GN 生成构建文件
           python3 tools/gn ${{ matrix.gn_android_args }}
           # Ninja 编译
           ninja -C ../out/android_release_arm64 flutter/lib/snapshot:generate_snapshot_bin flutter.jar
         timeout-minutes: 90
 
-      # ---- 7. 编译 Host release (gen_snapshot) ----
+      # ---- 8. 编译 Host release (gen_snapshot) ----
       - name: 编译 host_release
         run: |
-          cd src/flutter
+          cd engine/src/flutter
           python3 tools/gn ${{ matrix.gn_host_args }}
           ninja -C ../out/host_release gen_snapshot
         timeout-minutes: 60
 
-      # ---- 8. 打包 artifact ----
+      # ---- 9. 打包 artifact ----
       - name: 打包 Engine Artifact
         id: package
         run: |
@@ -180,10 +187,10 @@ jobs:
           mkdir -p "${PACK_DIR}/host_release"
 
           # 复制 flutter.jar
-          cp src/out/android_release_arm64/flutter.jar "${PACK_DIR}/android_release_arm64/"
+          cp engine/src/out/android_release_arm64/flutter.jar "${PACK_DIR}/android_release_arm64/"
 
           # 复制 gen_snapshot
-          cp src/out/host_release/${{ matrix.gen_snapshot_name }} "${PACK_DIR}/host_release/gen_snapshot"
+          cp engine/src/out/host_release/${{ matrix.gen_snapshot_name }} "${PACK_DIR}/host_release/gen_snapshot"
           chmod +x "${PACK_DIR}/host_release/gen_snapshot"
 
           # 计算 hash
