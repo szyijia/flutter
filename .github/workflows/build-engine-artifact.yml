@@ -142,6 +142,11 @@ jobs:
           gclient sync -D --no-history --shallow --jobs 8
         timeout-minutes: 60
 
+      # ---- 5. 安装 Rust Android 交叉编译 target ----
+      - name: 安装 Rust aarch64-linux-android target
+        run: |
+          rustup target add aarch64-linux-android
+
       # ---- 6. 安装依赖（Linux） ----
       - name: 安装 Linux 编译依赖
         if: runner.os == 'Linux'
