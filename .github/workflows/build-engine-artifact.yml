@@ -28,9 +28,9 @@ on:
   workflow_dispatch:
     inputs:
       flutter_version:
-        description: 'Flutter 版本号（如 3.44.0）'
-        required: true
-        default: '3.44.0'
+        description: 'Flutter 版本号（留空则自动从 flutter_release/* 分支推断最新版本）'
+        required: false
+        default: ''
       upload_to_minio:
         description: '是否上传到 MinIO CDN'
         required: false
@@ -51,24 +51,41 @@ jobs:
       flutter_version: ${{ steps.version.outputs.flutter_version }}
       engine_commit: ${{ steps.commit.outputs.engine_commit }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: 确定 Flutter 版本号
         id: version
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.flutter_version }}" ]; then
+            # 手动触发且指定了版本号
             echo "flutter_version=${{ github.event.inputs.flutter_version }}" >> $GITHUB_OUTPUT
-          else
+          elif [ "${{ github.event_name }}" = "push" ]; then
             # 从 tag 提取版本号: engine-v3.44.0 → 3.44.0
             TAG="${GITHUB_REF#refs/tags/engine-v}"
             echo "flutter_version=${TAG}" >> $GITHUB_OUTPUT
+          else
+            # 自动推断：从 flutter_release/* 分支中取最新版本号
+            LATEST=$(git branch -r | grep 'origin/flutter_release/' | grep -v '_ex/' | sed 's|.*origin/flutter_release/||' | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
+            if [ -z "$LATEST" ]; then
+              echo "❌ 无法自动推断版本号，请手动指定 flutter_version"
+              exit 1
+            fi
+            echo "✅ 自动推断 Flutter 版本号: ${LATEST}"
+            echo "flutter_version=${LATEST}" >> $GITHUB_OUTPUT
           fi
-
-      - name: Checkout
-        uses: actions/checkout@v4
 
       - name: 获取 engine commit
         id: commit
         run: |
           echo "engine_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: 输出版本信息
+        run: |
+          echo "📦 Flutter Version: ${{ steps.version.outputs.flutter_version }}"
+          echo "🔗 Engine Commit: ${{ steps.commit.outputs.engine_commit }}"
 
   # ========================================
   # 编译阶段：多平台并行
