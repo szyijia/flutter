@@ -1,6 +1,29 @@
 // Copyright 2013 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+//
+// Patchwing W5'-3 (v3.0): Stubbed implementation of PatchCacheEntry::Create.
+//
+// Upstream code path here calls:
+//
+//   * Shorebird_ReadLinkHeader(...)         — provided as a FATAL stub
+//                                             in shorebird_dart_stubs.cc
+//   * Dart_LoadELF(..., dart::bin::kReadOnly)
+//                                           — Shorebird-private 9-arg
+//                                             overload of the upstream
+//                                             8-arg Dart_LoadELF; the
+//                                             extra |mode| parameter
+//                                             does not exist in vanilla
+//                                             dart-sdk.
+//
+// Patchwing v3.0 drives patches via bsdiff full-replacement of
+// libapp.so on Android, so the .vmcode loading path is NEVER reached
+// at runtime — TryLoadFromPatch() below already bails out when the
+// path does not end in ".vmcode". We therefore stub
+// PatchCacheEntry::Create() with FML_LOG(FATAL) and remove the
+// upstream Dart_LoadELF call altogether. See docs/W5_NOTES.md
+// §"Future work: real .vmcode support" for the plan to restore the
+// real implementation.
 
 #include "flutter/runtime/shorebird/patch_cache.h"
 
@@ -9,8 +32,6 @@
 #include "flutter/fml/logging.h"
 #include "flutter/fml/mapping.h"
 #include "flutter/runtime/shorebird/patch_mapping.h"
-#include "flutter/runtime/shorebird/shorebird_dart_stubs.h"
-#include "third_party/dart/runtime/include/dart_api.h"
 
 namespace flutter {
 
@@ -29,39 +50,18 @@ constexpr const char* kIsolateInstructionsSymbol =
 
 std::shared_ptr<PatchCacheEntry> PatchCacheEntry::Create(
     const std::string& path) {
-  // vmcode files currently use ELF internally after a prefix of a Shorebird
-  // linker header.
-  auto elf_mapping = fml::FileMapping::CreateReadOnly(path);
-  if (!elf_mapping) {
-    FML_LOG(ERROR) << "Failed to map file: " << path;
-    return nullptr;
-  }
-
-  int elf_file_offset = Shorebird_ReadLinkHeader(elf_mapping->GetMapping(),
-                                                 elf_mapping->GetSize());
-
-  const char* error = nullptr;
-  // The VM Snapshot is identical for all binaries produced by a given version
-  // of Dart. Our linker checks this and will fail to link if ever the VM
-  // snapshot changes. We ignore the VM data/instrs here.
-  const uint8_t* ignored_vm_data = nullptr;
-  const uint8_t* ignored_vm_instrs = nullptr;
-  const uint8_t* isolate_data = nullptr;
-  const uint8_t* isolate_instrs = nullptr;
-
-  Dart_LoadedElf* elf = Dart_LoadELF(
-      path.c_str(), elf_file_offset, &error, &ignored_vm_data,
-      &ignored_vm_instrs, &isolate_data, &isolate_instrs, dart::bin::kReadOnly);
-
-  if (elf == nullptr) {
-    FML_LOG(ERROR) << "Failed to load patch at " << path << " error: " << error;
-    return nullptr;
-  }
-
-  FML_LOG(INFO) << "Loaded patch from " << path;
-
-  return std::shared_ptr<PatchCacheEntry>(
-      new PatchCacheEntry(path, elf, isolate_data, isolate_instrs));
+  // Patchwing v3.0 stub: see file header. The .vmcode loading code path
+  // is unreachable on the release path because TryLoadFromPatch() bails
+  // out for non-.vmcode inputs, and Patchwing always ships full
+  // libapp.so via bsdiff (never .vmcode). If we ever land here it means
+  // a caller bypassed TryLoadFromPatch(); fail loudly so it gets
+  // noticed during dev rather than silently degrading.
+  FML_LOG(FATAL) << "[patchwing] PatchCacheEntry::Create stub invoked for "
+                 << path
+                 << " — .vmcode loading is not supported in the "
+                    "Patchwing v3.0 build (use bsdiff full-replacement "
+                    "of libapp.so instead). See docs/W5_NOTES.md.";
+  return nullptr;
 }
 
 PatchCacheEntry::PatchCacheEntry(const std::string& path,
@@ -74,6 +74,10 @@ PatchCacheEntry::PatchCacheEntry(const std::string& path,
       isolate_instrs_(isolate_instrs) {}
 
 PatchCacheEntry::~PatchCacheEntry() {
+  // In the Patchwing v3.0 stub build PatchCacheEntry instances are
+  // never constructed (Create() always FATAL-aborts), so this dtor is
+  // effectively unreachable. We still call Dart_UnloadELF for safety
+  // in case a future change brings back real .vmcode loading.
   if (elf_ != nullptr) {
     FML_LOG(INFO) << "Unloading patch from " << path_;
     Dart_UnloadELF(elf_);
@@ -143,7 +147,10 @@ std::shared_ptr<const fml::Mapping> TryLoadFromPatch(
     return nullptr;
   }
 
-  // Load the patch using the cache.
+  // Patchwing v3.0: reaching this point means a .vmcode file was
+  // passed to the engine, which Patchwing does not support (we use
+  // bsdiff full-replacement of libapp.so, not .vmcode). Fall through
+  // into PatchCacheEntry::Create which will FML_LOG(FATAL).
   auto cache_entry = PatchCache::Instance().GetOrLoad(patch_path);
   if (!cache_entry) {
     FML_LOG(FATAL) << "Failed to load symbol from patch at " << patch_path;
@@ -151,9 +158,6 @@ std::shared_ptr<const fml::Mapping> TryLoadFromPatch(
   }
 
   FML_LOG(INFO) << "Loading symbol from patch: " << symbol_name;
-
-  // ReportLaunchStart is now called from ResolveIsolateData in
-  // dart_snapshot.cc, which runs before TryLoadFromPatch on all platforms.
 
   if (symbol == kIsolateDataSymbol) {
     return PatchMapping::CreateIsolateData(cache_entry);

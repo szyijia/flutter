@@ -1,20 +1,58 @@
+// Copyright 2013 The Flutter Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+//
+// Patchwing W5'-3 (v3.0): Stubbed implementation of the two snapshot-
+// blob factory helpers (DataMapping / InstructionsMapping).
+//
+// Upstream code path here calls the Shorebird-private Dart C APIs:
+//
+//   * Dart_SnapshotDataSize(const uint8_t*)
+//   * Dart_SnapshotInstrSize(const uint8_t*)
+//
+// Neither symbol exists in the vanilla upstream dart-sdk that Patchwing
+// v3.0 ships in vendor/flutter/DEPS — they were added to the Shorebird
+// fork to enumerate the size of the four AOT snapshot blobs that the
+// Shorebird Rust updater feeds into its dart-aware binary diff.
+//
+// In Patchwing v3.0 we use bsdiff full-replacement of libapp.so on
+// Android, which never goes through SnapshotsDataHandle. Concretely,
+// FileCallbacksImpl::Open() in shorebird.cc only constructs a
+// SnapshotsDataHandle when SHOREBIRD_USE_INTERPRETER is defined, which
+// only happens on iOS interpreter-mode targets — never on Patchwing
+// Android release builds. Therefore DataMapping / InstructionsMapping
+// (and createForSnapshots, which calls them) are dead code on every
+// Patchwing target, but the symbols MUST still resolve at link time.
+//
+// We replace the two private-API calls with FML_LOG(FATAL) stubs so
+// that any accidental runtime invocation is loud, while satisfying
+// the linker. See docs/W5_NOTES.md §"Future work: real .vmcode /
+// dart-aware diff support" for the plan to restore the real
+// implementation.
+
 #include "flutter/shell/common/shorebird/snapshots_data_handle.h"
 
-#include "third_party/dart/runtime/include/dart_native_api.h"
+#include "flutter/fml/logging.h"
 
 namespace flutter {
 
-static std::unique_ptr<fml::Mapping> DataMapping(const DartSnapshot& snapshot) {
-  auto ptr = snapshot.GetDataMapping();
-  return std::make_unique<fml::NonOwnedMapping>(ptr,
-                                                Dart_SnapshotDataSize(ptr));
+static std::unique_ptr<fml::Mapping> DataMapping(
+    const DartSnapshot& /*snapshot*/) {
+  FML_LOG(FATAL) << "[patchwing] snapshots_data_handle::DataMapping stub "
+                    "invoked: the dart-aware diff path is not supported "
+                    "in the Patchwing v3.0 build (use bsdiff full-"
+                    "replacement of libapp.so instead). See "
+                    "docs/W5_NOTES.md.";
+  return nullptr;
 }
 
 static std::unique_ptr<fml::Mapping> InstructionsMapping(
-    const DartSnapshot& snapshot) {
-  auto ptr = snapshot.GetInstructionsMapping();
-  return std::make_unique<fml::NonOwnedMapping>(ptr,
-                                                Dart_SnapshotInstrSize(ptr));
+    const DartSnapshot& /*snapshot*/) {
+  FML_LOG(FATAL) << "[patchwing] snapshots_data_handle::InstructionsMapping "
+                    "stub invoked: the dart-aware diff path is not "
+                    "supported in the Patchwing v3.0 build. See "
+                    "docs/W5_NOTES.md.";
+  return nullptr;
 }
 
 // The size of the snapshot data is the sum of the sizes of the blobs.
