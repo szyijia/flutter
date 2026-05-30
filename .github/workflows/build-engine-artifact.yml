@@ -83,18 +83,21 @@ jobs:
             platform: linux-x64
             gn_host_args: '--runtime-mode=release --no-goma'
             gn_android_args: '--android --android-cpu=arm64 --runtime-mode=release --no-goma'
+            host_out_dir: host_release
             gen_snapshot_name: gen_snapshot
 
           - os: macos-14  # Apple Silicon
             platform: darwin-arm64
             gn_host_args: '--runtime-mode=release --no-goma --mac-cpu=arm64'
             gn_android_args: '--android --android-cpu=arm64 --runtime-mode=release --no-goma'
+            host_out_dir: host_release_arm64
             gen_snapshot_name: gen_snapshot
 
           - os: macos-13  # Intel
             platform: darwin-x64
             gn_host_args: '--runtime-mode=release --no-goma'
             gn_android_args: '--android --android-cpu=arm64 --runtime-mode=release --no-goma'
+            host_out_dir: host_release
             gen_snapshot_name: gen_snapshot
 
     runs-on: ${{ matrix.os }}
@@ -175,7 +178,7 @@ jobs:
         working-directory: repo/engine/src/flutter
         run: |
           python3 tools/gn ${{ matrix.gn_host_args }}
-          ninja -C ../out/host_release gen_snapshot
+          ninja -C ../out/${{ matrix.host_out_dir }} gen_snapshot
         timeout-minutes: 60
 
       # ---- 9. 打包 artifact ----
@@ -192,7 +195,7 @@ jobs:
           cp repo/engine/src/out/android_release_arm64/flutter.jar "${PACK_DIR}/android_release_arm64/"
 
           # 复制 gen_snapshot
-          cp repo/engine/src/out/host_release/${{ matrix.gen_snapshot_name }} "${PACK_DIR}/host_release/gen_snapshot"
+          cp repo/engine/src/out/${{ matrix.host_out_dir }}/${{ matrix.gen_snapshot_name }} "${PACK_DIR}/host_release/gen_snapshot"
           chmod +x "${PACK_DIR}/host_release/gen_snapshot"
 
           # 计算 hash
