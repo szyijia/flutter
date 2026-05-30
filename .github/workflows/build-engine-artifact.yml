@@ -263,7 +263,7 @@ jobs:
   release:
     needs: [prepare, build]
     runs-on: ubuntu-latest
-    if: always() && needs.prepare.result == 'success' && !cancelled() && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.upload_to_minio == 'true'))
+    if: always() && needs.prepare.result == 'success' && !cancelled() && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.upload_to_minio != 'false'))
     env:
       FLUTTER_VERSION: ${{ needs.prepare.outputs.flutter_version }}
 
@@ -275,7 +275,10 @@ jobs:
 
       - name: 列出产物
         run: |
-          echo "=== 编译产物 ==="
+          echo "=== 编译产物目录结构 ==="
+          find artifacts/ -type f | sort
+          echo ""
+          echo "=== ZIP 文件 ==="
           find artifacts/ -name "*.zip" -exec ls -lh {} \;
 
       # ---- 上传到 MinIO ----
