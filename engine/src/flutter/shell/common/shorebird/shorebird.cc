@@ -25,6 +25,7 @@
 #include "third_party/dart/runtime/include/dart_tools_api.h"
 
 #include "third_party/updater/library/include/updater.h"
+#include "flutter/runtime/shorebird/shorebird_dart_stubs.h"
 
 // Namespaced to avoid Google style warnings.
 namespace flutter {
