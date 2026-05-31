@@ -1,20 +1,27 @@
 #include "flutter/shell/common/shorebird/snapshots_data_handle.h"
 
-#include "third_party/dart/runtime/include/dart_native_api.h"
+#include "flutter/fml/logging.h"
 
 namespace flutter {
 
-static std::unique_ptr<fml::Mapping> DataMapping(const DartSnapshot& snapshot) {
-  auto ptr = snapshot.GetDataMapping();
-  return std::make_unique<fml::NonOwnedMapping>(ptr,
-                                                Dart_SnapshotDataSize(ptr));
+// patchwing: Dart_SnapshotDataSize / Dart_SnapshotInstrSize are private APIs
+// added by shorebirdtech's dart-sdk fork. They do not exist in the upstream
+// public dart-sdk. These stubs satisfy the compiler; the code path is only
+// reached on iOS interpreter-mode targets (never on Patchwing Android builds).
+static std::unique_ptr<fml::Mapping> DataMapping(
+    const DartSnapshot& /*snapshot*/) {
+  FML_LOG(FATAL) << "[patchwing] snapshots_data_handle::DataMapping stub "
+                    "invoked — this code path requires Shorebird's private "
+                    "dart-sdk and is not supported in Patchwing builds.";
+  return nullptr;
 }
 
 static std::unique_ptr<fml::Mapping> InstructionsMapping(
-    const DartSnapshot& snapshot) {
-  auto ptr = snapshot.GetInstructionsMapping();
-  return std::make_unique<fml::NonOwnedMapping>(ptr,
-                                                Dart_SnapshotInstrSize(ptr));
+    const DartSnapshot& /*snapshot*/) {
+  FML_LOG(FATAL) << "[patchwing] snapshots_data_handle::InstructionsMapping "
+                    "stub invoked — this code path requires Shorebird's "
+                    "private dart-sdk and is not supported in Patchwing builds.";
+  return nullptr;
 }
 
 // The size of the snapshot data is the sum of the sizes of the blobs.
