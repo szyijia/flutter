@@ -36,7 +36,8 @@ group("generate_snapshot_bins") {
       (target_os == "mac" || target_os == "ios" || target_os == "android")) {
     # For macOS target builds: needed for both target CPUs (arm64, x64).
     public_deps += [
-      ":create_macos_analyze_snapshots",
+      # patchwing: removed ":create_macos_analyze_snapshots" — not needed
+      # for Patchwing builds and causes GN errors with upstream dart-sdk.
       ":create_macos_gen_snapshots",
     ]
   } else if (host_os == "mac" &&
@@ -49,11 +50,12 @@ group("generate_snapshot_bins") {
     public_deps = [ "$dart_src/runtime/bin:gen_snapshot($host_toolchain)" ]
   }
 
-  # Build analyze_snapshot for 64-bit target CPUs on linux.
-  # Or always targeting arm64 for Shorebird builds.
-  if ((host_os == "linux" &&
-       (target_cpu == "x64" || target_cpu == "riscv64")) ||
-      target_cpu == "arm64") {
+  # Build analyze_snapshot for 64-bit target CPUs on linux only.
+  # patchwing: removed the "|| target_cpu == arm64" condition that Shorebird
+  # added for iOS support — it causes GN errors on mac with upstream dart-sdk.
+  if (host_os == "linux" &&
+      (target_cpu == "x64" || target_cpu == "arm64" ||
+       target_cpu == "riscv64")) {
     public_deps += [ "$dart_src/runtime/bin:analyze_snapshot($host_toolchain)" ]
   }
 }
