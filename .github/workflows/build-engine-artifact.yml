@@ -176,14 +176,14 @@ jobs:
       # ---- 7. 手动编译 Rust updater（旧版本需要） ----
       # 3.29~3.41.8 版本的 BUILD.gn 硬编码了 libupdater.a 路径，
       # 但 GN/Ninja 不会自动编译它。需要在 ninja 之前手动 cargo build。
-      # 3.41.9+ 版本已集成到 GN 中（build_rust_updater.py），会自动编译。
-      - name: 编译 Rust updater (旧版本)
+      # 3.44.0+ 版本已集成到 GN 中（build_rust_updater.gni），会自动编译。
+      - name: 编译 Rust updater for Android (旧版本)
         working-directory: repo/engine/src/flutter
         run: |
-          # 检测是否需要手动编译：如果没有 build_rust_updater.py 则需要
-          if [ ! -f "shell/common/shorebird/build_rust_updater.py" ]; then
+          # 检测是否需要手动编译：如果没有 build_rust_updater.gni 则需要
+          if [ ! -f "shell/common/shorebird/build_rust_updater.gni" ]; then
             echo "⚠️ 旧版本，需要手动编译 Rust updater..."
-            
+
             UPDATER_DIR="third_party/updater"
             if [ ! -d "$UPDATER_DIR" ]; then
               echo "❌ updater 目录不存在，跳过（可能 gclient sync 未拉取）"
@@ -191,12 +191,12 @@ jobs:
             fi
 
             # 配置 Android NDK 环境
-            NDK_PATH="${ANDROID_NDK_HOME:-$ANDROID_NDK_ROOT}"
-            if [ -z "$NDK_PATH" ]; then
+            NDK_PATH="${ANDROID_NDK_HOME:-${ANDROID_NDK_ROOT:-}}"
+            if [ -z "$NDK_PATH" ] || [ ! -d "$NDK_PATH" ]; then
               # GitHub Actions 默认 NDK 路径
-              NDK_PATH="$ANDROID_SDK_ROOT/ndk-bundle"
+              NDK_PATH="${ANDROID_HOME}/ndk-bundle"
               if [ ! -d "$NDK_PATH" ]; then
-                NDK_PATH=$(ls -d $ANDROID_SDK_ROOT/ndk/*/  2>/dev/null | sort -V | tail -1 | sed 's|/$||')
+                NDK_PATH=$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}/ndk" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort -V | tail -1)
               fi
             fi
             echo "NDK Path: $NDK_PATH"
@@ -218,24 +218,23 @@ jobs:
 
             # 编译 aarch64-linux-android target
             RUST_TARGET="aarch64-linux-android"
-            export CC="$TOOLCHAIN_BIN/${RUST_TARGET}${API_LEVEL}-clang"
-            export AR="$TOOLCHAIN_BIN/llvm-ar"
-            export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$CC"
+            export CC_aarch64_linux_android="$TOOLCHAIN_BIN/${RUST_TARGET}${API_LEVEL}-clang"
+            export AR_aarch64_linux_android="$TOOLCHAIN_BIN/llvm-ar"
+            export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$TOOLCHAIN_BIN/${RUST_TARGET}${API_LEVEL}-clang"
 
-            echo "CC=$CC"
-            echo "AR=$AR"
+            echo "CC=$CC_aarch64_linux_android"
+            echo "AR=$AR_aarch64_linux_android"
+            echo "LINKER=$CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER"
 
             rustup target add $RUST_TARGET
 
             cd "$UPDATER_DIR"
             cargo build --release --target $RUST_TARGET -p updater
 
-            # 将编译产物复制到 BUILD.gn 期望的路径
-            # BUILD.gn 期望: //flutter/third_party/updater/target/<rust_target>/release/libupdater.a
             echo "✅ Rust updater 编译完成"
             ls -la "target/$RUST_TARGET/release/libupdater.a"
           else
-            echo "✅ 新版本，Rust updater 将由 GN/Ninja 自动编译"
+            echo "✅ 新版本（有 build_rust_updater.gni），Rust updater 将由 GN/Ninja 自动编译"
           fi
 
       # ---- 8. 编译 Android release (arm64) ----
@@ -252,7 +251,7 @@ jobs:
       - name: 编译 Rust updater for host (旧版本)
         working-directory: repo/engine/src/flutter
         run: |
-          if [ ! -f "shell/common/shorebird/build_rust_updater.py" ]; then
+          if [ ! -f "shell/common/shorebird/build_rust_updater.gni" ]; then
             UPDATER_DIR="third_party/updater"
             if [ ! -d "$UPDATER_DIR" ]; then
               echo "⚠️ updater 目录不存在，跳过"
