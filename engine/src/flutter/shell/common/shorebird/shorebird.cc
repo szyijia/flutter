@@ -20,6 +20,7 @@
 #include "flutter/shell/common/shell.h"
 #include "flutter/shell/common/shorebird/snapshots_data_handle.h"
 #include "flutter/shell/common/shorebird/updater.h"
+#include "flutter/runtime/shorebird/shorebird_dart_stubs.h"
 #include "flutter/shell/common/switches.h"
 #include "fml/logging.h"
 #include "shell/platform/embedder/embedder.h"
