@@ -515,7 +515,12 @@ jobs:
           GS_SIZE=$(wc -c < "${PACK_DIR}/host_release/gen_snapshot" | tr -d ' ')
 
           # 生成元数据
-          ENGINE_COMMIT=$(cd repo && git rev-parse HEAD)
+          # 根据版本类型选择正确的 git 目录获取 commit
+          if [ "${{ steps.info.outputs.engine_type }}" = "monorepo" ]; then
+            ENGINE_COMMIT=$(cd repo && git rev-parse HEAD)
+          else
+            ENGINE_COMMIT=$(cd repo/src/flutter && git rev-parse HEAD)
+          fi
           cat > "${PACK_DIR}/patchwing.json" << EOF
           {
             "schema_version": 1,
