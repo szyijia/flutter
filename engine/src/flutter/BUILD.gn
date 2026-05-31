@@ -119,10 +119,16 @@ group("flutter") {
 
         # path_ops
         "//flutter/tools/path_ops",
-
-        # Built alongside gen_snapshot arm64 targets.
-        "$dart_src/runtime/bin:analyze_snapshot",
       ]
+
+      # patchwing: analyze_snapshot is only needed on linux (upstream behavior).
+      # Shorebirdtech added mac support for iOS hot-reload, but it causes
+      # "Unresolved dependencies" errors with upstream dart-sdk on mac.
+      if (host_os == "linux") {
+        public_deps += [
+          "$dart_src/runtime/bin:analyze_snapshot",
+        ]
+      }
 
       if (host_os == "linux" || host_os == "mac") {
         public_deps += [
