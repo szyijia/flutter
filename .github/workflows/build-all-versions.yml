@@ -180,6 +180,13 @@ jobs:
           ref: flutter_release/${{ matrix.flutter_version }}
           path: repo
 
+      - name: 保存 engine commit (monorepo)
+        id: engine_commit
+        if: steps.info.outputs.engine_type == 'monorepo'
+        working-directory: repo
+        run: |
+          echo "commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
       - name: 配置 .gclient (monorepo)
         if: steps.info.outputs.engine_type == 'monorepo'
         working-directory: repo
@@ -234,6 +241,13 @@ jobs:
         run: |
           gclient sync -D --no-history --shallow --jobs 8
         timeout-minutes: 60
+
+      - name: 保存 engine commit (legacy)
+        id: engine_commit_legacy
+        if: steps.info.outputs.engine_type == 'legacy'
+        working-directory: repo/src/flutter
+        run: |
+          echo "commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
       # ---- 3. 统一目录结构：确保 repo/engine/src/flutter 路径可用 ----
       - name: 统一目录结构 (legacy)
@@ -515,11 +529,11 @@ jobs:
           GS_SIZE=$(wc -c < "${PACK_DIR}/host_release/gen_snapshot" | tr -d ' ')
 
           # 生成元数据
-          # 根据版本类型选择正确的 git 目录获取 commit
+          # 使用之前保存的 engine commit（避免 gclient sync 后 .git 被破坏）
           if [ "${{ steps.info.outputs.engine_type }}" = "monorepo" ]; then
-            ENGINE_COMMIT=$(cd repo && git rev-parse HEAD)
+            ENGINE_COMMIT="${{ steps.engine_commit.outputs.commit }}"
           else
-            ENGINE_COMMIT=$(cd repo/src/flutter && git rev-parse HEAD)
+            ENGINE_COMMIT="${{ steps.engine_commit_legacy.outputs.commit }}"
           fi
           cat > "${PACK_DIR}/patchwing.json" << EOF
           {
