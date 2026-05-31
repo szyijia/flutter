@@ -330,14 +330,20 @@ jobs:
 
       - name: 编译 Rust updater for Android (legacy)
         if: steps.info.outputs.engine_type == 'legacy'
-        working-directory: repo/src/flutter
+        working-directory: repo/src
         run: |
-          if [ ! -f "shell/common/shorebird/build_rust_updater.gni" ]; then
+          if [ ! -f "flutter/shell/common/shorebird/build_rust_updater.gni" ]; then
+            # Legacy 版本的 DEPS 将 updater 放在 src/third_party/updater
+            # BUILD.gn 引用路径: //third_party/updater/target/...
             UPDATER_DIR="third_party/updater"
             if [ ! -d "$UPDATER_DIR" ]; then
-              echo "⚠️ updater 目录不存在，跳过"
+              echo "⚠️ updater 目录不存在（src/third_party/updater），跳过"
+              echo "当前目录: $(pwd)"
+              echo "目录内容: $(ls -la third_party/ 2>/dev/null | head -10)"
               exit 0
             fi
+
+            echo "✅ 找到 updater 目录: $(pwd)/$UPDATER_DIR"
 
             NDK_PATH="${ANDROID_NDK_HOME:-${ANDROID_NDK_ROOT:-}}"
             if [ -z "$NDK_PATH" ] || [ ! -d "$NDK_PATH" ]; then
@@ -351,6 +357,7 @@ jobs:
               echo "❌ 找不到 Android NDK"
               exit 1
             fi
+            echo "NDK Path: $NDK_PATH"
 
             if [[ "$OSTYPE" == "linux-gnu"* ]]; then
               HOST_TAG="linux-x86_64"
@@ -363,6 +370,9 @@ jobs:
             export CC_aarch64_linux_android="$TOOLCHAIN_BIN/${RUST_TARGET}21-clang"
             export AR_aarch64_linux_android="$TOOLCHAIN_BIN/llvm-ar"
             export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$TOOLCHAIN_BIN/${RUST_TARGET}21-clang"
+
+            echo "CC=$CC_aarch64_linux_android"
+            echo "AR=$AR_aarch64_linux_android"
 
             rustup target add $RUST_TARGET
             cd "$UPDATER_DIR"
@@ -426,9 +436,9 @@ jobs:
 
       - name: 编译 Rust updater for host (旧版本, legacy)
         if: steps.info.outputs.engine_type == 'legacy'
-        working-directory: repo/src/flutter
+        working-directory: repo/src
         run: |
-          if [ ! -f "shell/common/shorebird/build_rust_updater.gni" ]; then
+          if [ ! -f "flutter/shell/common/shorebird/build_rust_updater.gni" ]; then
             UPDATER_DIR="third_party/updater"
             if [ ! -d "$UPDATER_DIR" ]; then
               echo "⚠️ updater 目录不存在，跳过"
