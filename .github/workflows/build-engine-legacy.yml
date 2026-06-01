@@ -91,6 +91,15 @@ jobs:
       FLUTTER_VERSION: ${{ needs.prepare.outputs.flutter_version }}
 
     steps:
+      # ---- 0. 安装 Python 3.11（macOS 需要） ----
+      # 3.10~3.19 的 dart-sdk 中 tools/utils.py 使用了 `import imp`，
+      # 该模块在 Python 3.12 中被移除。macOS runner 默认 Python 是 3.12+。
+      - name: 安装 Python 3.11 (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       # ---- 1. 安装 depot_tools ----
       - name: 安装 depot_tools
         run: |
