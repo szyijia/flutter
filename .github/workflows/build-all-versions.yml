@@ -166,12 +166,13 @@ jobs:
             echo "📦 类型: Legacy (独立 engine 仓库)"
           fi
 
-      # ---- 0. 安装 Python 3.11（macOS legacy 版本需要） ----
+      # ---- 0. 安装 Python 3.11（legacy 版本需要） ----
       # 3.10~3.19 的 dart-sdk 中 tools/utils.py 使用了 `import imp`，
-      # 该模块在 Python 3.12 中被移除。macOS runner 默认 Python 是 3.12+，
-      # 所以需要降级到 3.11。3.22+ 的 dart-sdk 已改用 importlib，无需降级。
-      - name: 安装 Python 3.11 (macOS legacy)
-        if: runner.os == 'macOS' && steps.info.outputs.engine_type == 'legacy'
+      # 该模块在 Python 3.12 中被移除。ubuntu-latest (24.04) 和 macOS runner
+      # 默认 Python 均为 3.12+，所以需要降级到 3.11。
+      # 3.22+ 的 dart-sdk 已改用 importlib，无需降级，但安装 3.11 无害。
+      - name: 安装 Python 3.11 (legacy)
+        if: steps.info.outputs.engine_type == 'legacy'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
