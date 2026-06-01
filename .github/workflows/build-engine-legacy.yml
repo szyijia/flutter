@@ -121,6 +121,9 @@ jobs:
                 "download_emsdk": False,
                 "release_candidate": False,
                 "download_android_deps": True,
+                # patchwing: 禁用 Fuchsia SDK 下载（~10GB+），Patchwing 不需要 Fuchsia 支持，
+                # 同时避免 GitHub runner 磁盘空间不足。
+                "download_fuchsia_deps": False,
               },
             },
           ]
