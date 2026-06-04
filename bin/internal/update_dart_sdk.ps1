@@ -20,8 +20,19 @@ $cachePath = "$flutterRoot\bin\cache"
 $dartSdkPath = "$cachePath\dart-sdk"
 $dartSdkLicense = "$cachePath\LICENSE.dart_sdk_archive.md"
 $engineStamp = "$cachePath\engine-dart-sdk.stamp"
-$engineVersion = (Get-Content "$flutterRoot\bin\cache\engine.stamp")
-$engineRealm = (Get-Content "$flutterRoot\bin\cache\engine.realm")
+# Patchwing: 使用 dart_sdk_engine.version（上游官方 engine revision）来下载 Dart SDK
+$dartSdkEngineVersionFile = "$flutterRoot\bin\internal\dart_sdk_engine.version"
+if (Test-Path $dartSdkEngineVersionFile) {
+    $engineVersion = (Get-Content $dartSdkEngineVersionFile).Trim()
+} else {
+    $engineVersion = (Get-Content "$flutterRoot\bin\cache\engine.stamp")
+}
+$engineRealmFile = "$flutterRoot\bin\cache\engine.realm"
+if (Test-Path $engineRealmFile) {
+    $engineRealm = (Get-Content $engineRealmFile)
+} else {
+    $engineRealm = ""
+}
 
 $oldDartSdkPrefix = "dart-sdk.old"
 
@@ -41,7 +52,7 @@ if ((Test-Path $engineStamp) -and ($engineVersion -eq (Get-Content $engineStamp)
 
 $dartSdkBaseUrl = $Env:FLUTTER_STORAGE_BASE_URL
 if (-not $dartSdkBaseUrl) {
-    $dartSdkBaseUrl = "https://download.shorebird.dev"
+    $dartSdkBaseUrl = "https://storage.googleapis.com"
 }
 if ($engineRealm) {
     $dartSdkBaseUrl = "$dartSdkBaseUrl/$engineRealm"

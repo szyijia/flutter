@@ -21,8 +21,16 @@ DART_SDK_PATH_OLD="$DART_SDK_PATH.old"
 ENGINE_STAMP="$FLUTTER_ROOT/bin/cache/engine-dart-sdk.stamp"
 OS="$(uname -s)"
 
-ENGINE_VERSION=$(< "$FLUTTER_ROOT/bin/cache/engine.stamp")
-ENGINE_REALM=$(< "$FLUTTER_ROOT/bin/cache/engine.realm")
+# Patchwing: 使用 dart_sdk_engine.version（上游官方 engine revision）来下载 Dart SDK，
+# 而不是 engine.stamp（我们魔改的 engine revision，Google CDN 上没有对应的 Dart SDK）。
+DART_SDK_ENGINE_VERSION_FILE="$FLUTTER_ROOT/bin/internal/dart_sdk_engine.version"
+if [ -f "$DART_SDK_ENGINE_VERSION_FILE" ]; then
+  ENGINE_VERSION=$(< "$DART_SDK_ENGINE_VERSION_FILE")
+else
+  ENGINE_VERSION=$(< "$FLUTTER_ROOT/bin/cache/engine.stamp")
+fi
+ENGINE_VERSION="${ENGINE_VERSION//[[:space:]]/}"
+ENGINE_REALM=$(< "$FLUTTER_ROOT/bin/cache/engine.realm" 2>/dev/null || echo "")
 ENGINE_REALM="${ENGINE_REALM//[[:space:]]/}"
 
 if [ ! -f "$ENGINE_STAMP" ] || [ "$ENGINE_VERSION" != "$(< "$ENGINE_STAMP")" ]; then
@@ -127,8 +135,7 @@ if [ ! -f "$ENGINE_STAMP" ] || [ "$ENGINE_VERSION" != "$(< "$ENGINE_STAMP")" ]; 
     FIND=find
   fi
 
-  DART_SDK_BASE_URL="${FLUTTER_STORAGE_BASE_URL:-https://download.shorebird.dev}${ENGINE_REALM:+/$ENGINE_REALM}"
-  DART_SDK_URL="$DART_SDK_BASE_URL/flutter_infra_release/flutter/$ENGINE_VERSION/$DART_ZIP_NAME"
+  DART_SDK_BASE_URL="${FLUTTER_STORAGE_BASE_URL:-https://storage.googleapis.com}${ENGINE_REALM:+/$ENGINE_REALM}"  DART_SDK_URL="$DART_SDK_BASE_URL/flutter_infra_release/flutter/$ENGINE_VERSION/$DART_ZIP_NAME"
 
   # if the sdk path exists, copy it to a temporary location
   if [ -d "$DART_SDK_PATH" ]; then
