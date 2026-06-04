@@ -5,20 +5,20 @@
 // Patchwing W5'-3 (v3.0): Stubbed implementation of the two snapshot-
 // blob factory helpers (DataMapping / InstructionsMapping).
 //
-// Upstream code path here calls the Shorebird-private Dart C APIs:
+// Upstream code path here calls the Patchwing-private Dart C APIs:
 //
 //   * Dart_SnapshotDataSize(const uint8_t*)
 //   * Dart_SnapshotInstrSize(const uint8_t*)
 //
 // Neither symbol exists in the vanilla upstream dart-sdk that Patchwing
-// v3.0 ships in vendor/flutter/DEPS — they were added to the Shorebird
+// v3.0 ships in vendor/flutter/DEPS — they were added to the Patchwing
 // fork to enumerate the size of the four AOT snapshot blobs that the
-// Shorebird Rust updater feeds into its dart-aware binary diff.
+// Patchwing Rust updater feeds into its dart-aware binary diff.
 //
 // In Patchwing v3.0 we use bsdiff full-replacement of libapp.so on
 // Android, which never goes through SnapshotsDataHandle. Concretely,
 // FileCallbacksImpl::Open() in shorebird.cc only constructs a
-// SnapshotsDataHandle when SHOREBIRD_USE_INTERPRETER is defined, which
+// SnapshotsDataHandle when PATCHWING_USE_INTERPRETER is defined, which
 // only happens on iOS interpreter-mode targets — never on Patchwing
 // Android release builds. Therefore DataMapping / InstructionsMapping
 // (and createForSnapshots, which calls them) are dead code on every
@@ -133,7 +133,7 @@ std::unique_ptr<SnapshotsDataHandle> SnapshotsDataHandle::createForSnapshots(
   // patch against. Logged at every patch-apply attempt so customer syslogs
   // include the exact sizes the bipatch state machine sees — directly
   // comparable to the host's `aot_tools dump_blobs` extraction.
-  FML_LOG(INFO) << "[shorebird] SnapshotsDataHandle blob sizes: vm_data="
+  FML_LOG(INFO) << "[patchwing] SnapshotsDataHandle blob sizes: vm_data="
                 << vm_data->GetSize() << "b iso_data=" << iso_data->GetSize()
                 << "b vm_instructions=" << vm_insns->GetSize()
                 << "b iso_instructions=" << iso_insns->GetSize() << "b total="

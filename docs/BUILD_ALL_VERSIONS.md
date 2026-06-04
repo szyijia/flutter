@@ -260,6 +260,12 @@ ninja -C ../out/host_release gen_snapshot
 |------|---------|
 | `DEPS` | `dart_sdk_git`: `git@github.com:shorebirdtech/dart-sdk.git` → `https://dart.googlesource.com/sdk.git` |
 | `DEPS` | `dart_sdk_revision`: 更新为对应的公开上游 commit |
+| `DEPS` | **perfetto URL 修复（3.10~3.19）**：`fuchsia_git + "/third_party/android.googlesource.com/platform/external/perfetto"` → `flutter_git + "/third_party/perfetto"`（commit `b8da0709...` 保持不变，flutter mirror 中可获取） |
+| `BUILD.gn` / `lib/snapshot/BUILD.gn` | 将 `analyze_snapshot` 的引用包裹在 `if (host_os == "linux")` 中（修复 macOS host_release_arm64 GN 错误） |
+| `shell/common/shorebird/snapshots_data_handle.cc` | 将 `DataMapping` / `InstructionsMapping` 替换为 `FML_LOG(FATAL)` stub（消除对 `Dart_SnapshotDataSize` / `Dart_SnapshotInstrSize` 的依赖） |
+| `shell/common/shorebird/shorebird.cc` 等 | 添加 `shorebird_dart_stubs` include / stub 实现（消除 `Shorebird_SetBaseSnapshots` 等私有符号未定义） |
+
+> 修复脚本：`scripts/fix_perfetto_deps.py`、`scripts/fix_analyze_snapshot_legacy.py`、`scripts/fix_snapshots_data_handle.py`
 
 ---
 
@@ -355,6 +361,36 @@ patchwing-engine-<version>-<platform>.zip
 2. 在 shorebirdtech/dart-sdk 中找到该 commit
 3. 查看该 commit 对应的上游 base commit（通常在 commit message 中有说明）
 4. 或者使用 Flutter 官方 release 对应的 dart-sdk commit
+
+### Q5: gclient sync 失败：`fatal: repository 'https://fuchsia.googlesource.com/third_party/android.googlesource.com/platform/external/perfetto/' not found`
+
+**报错示例**：
+```
+fatal: repository 'https://fuchsia.googlesource.com/third_party/android.googlesource.com/platform/external/perfetto/' not found
+Error: Command 'git ... fetch origin b8da07095979310818f0efde2ef3c69ea70d62c5 ...' returned non-zero exit status 128 in .../src/third_party/perfetto
+```
+
+**原因**：3.10.x ~ 3.19.x（legacy）的 DEPS 文件中 `src/third_party/perfetto` 使用了 `fuchsia_git + "/third_party/android.googlesource.com/platform/external/perfetto"`，该 Google 镜像已被删除（HTTP 404）。3.22.0+ 已迁移到 `flutter_git + "/third_party/perfetto"`。
+
+**解决**：将 DEPS 中的 perfetto URL 改为 flutter mirror（commit hash 保持不变，`b8da0709...` 在 flutter mirror 中存在）：
+
+```python
+# 修复前
+'src/third_party/perfetto':
+  Var('fuchsia_git') + "/third_party/android.googlesource.com/platform/external/perfetto"
+  + '@' + Var('dart_perfetto_rev'),
+
+# 修复后
+'src/third_party/perfetto':
+  Var('flutter_git') + "/third_party/perfetto"
+  + '@' + Var('dart_perfetto_rev'),
+```
+
+**修复脚本**：`scripts/fix_perfetto_deps.py`
+
+**已修复版本**：`szyijia/engine` 的 `flutter_release/3.10.0` ~ `flutter_release/3.19.6`（含 `3.19.0-0.4.pre`），共 30 个分支。3.22.0+ 无需修复。
+
+**额外说明**：如果 gclient 已经创建了 `_bad_scm/...perfetto<random>` 失败副本目录，需要在 runner 上清理或重置 workspace 后重跑。
 
 ---
 

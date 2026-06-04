@@ -658,37 +658,37 @@ static void SetThreadPriority(FlutterThreadPriority priority) {
   }
 }
 
-- (BOOL)configureShorebird:(NSString**)patchPath {
-  NSLog(@"[shorebird] setting up non-linker shorebird");
+- (BOOL)configurePatchwing:(NSString**)patchPath {
+  NSLog(@"[patchwing] setting up non-linker patchwing");
   NSString* bundlePath =
       [[NSBundle bundleWithURL:[NSBundle.mainBundle.privateFrameworksURL
                                    URLByAppendingPathComponent:@"App.framework"]] bundlePath];
   bundlePath = [bundlePath stringByAppendingString:@"/App"];
   NSString* assetsPath = _project.assetsPath;
-  NSURL* shorebirdYamlPath = [NSURL URLWithString:@"shorebird.yaml"
+  NSURL* patchwingYamlPath = [NSURL URLWithString:@"patchwing.yaml"
                                     relativeToURL:[NSURL fileURLWithPath:assetsPath]];
-  NSString* shorebirdYamlContents = [NSString stringWithContentsOfURL:shorebirdYamlPath
+  NSString* patchwingYamlContents = [NSString stringWithContentsOfURL:patchwingYamlPath
                                                              encoding:NSUTF8StringEncoding
                                                                 error:nil];
   NSString* appVersion =
       [NSBundle.mainBundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
   NSString* appBuildNumber = [NSBundle.mainBundle objectForInfoDictionaryKey:@"CFBundleVersion"];
   std::string cache_path =
-      fml::paths::JoinPaths({getenv("HOME"), "Library", "Application Support", "shorebird"});
+      fml::paths::JoinPaths({getenv("HOME"), "Library", "Application Support", "patchwing"});
   flutter::ReleaseVersion release_version = {appVersion.UTF8String, appBuildNumber.UTF8String};
-  flutter::ShorebirdConfigArgs shorebird_args(cache_path, cache_path, bundlePath.UTF8String,
-                                              shorebirdYamlContents.UTF8String, release_version);
-  NSLog(@"[shorebird] calling ConfigureShorebird");
+  flutter::PatchwingConfigArgs patchwing_args(cache_path, cache_path, bundlePath.UTF8String,
+                                              patchwingYamlContents.UTF8String, release_version);
+  NSLog(@"[patchwing] calling ConfigurePatchwing");
   std::string patch_path;
-  auto res = flutter::ConfigureShorebird(shorebird_args, patch_path);
+  auto res = flutter::ConfigurePatchwing(patchwing_args, patch_path);
   if (!res) {
-    NSLog(@"[shorebird] ConfigureShorebird failed");
+    NSLog(@"[patchwing] ConfigurePatchwing failed");
     return NO;
   }
 
-  NSLog(@"[shorebird] ConfigureShorebird success!");
+  NSLog(@"[patchwing] ConfigurePatchwing success!");
   *patchPath = [NSString stringWithUTF8String:patch_path.c_str()];
-  NSLog(@"[shorebird] patchPath: %@", *patchPath);
+  NSLog(@"[patchwing] patchPath: %@", *patchPath);
   return YES;
 }
 
@@ -796,9 +796,9 @@ static void SetThreadPriority(FlutterThreadPriority priority) {
   flutterArguments.custom_task_runners = &custom_task_runners;
 
   NSString* elfPath;
-  BOOL configureShorebirdRes = [self configureShorebird:&elfPath];
-  if (!configureShorebirdRes) {
-    // No patch exists, or we failed to configure shorebird. This is a fallback.
+  BOOL configurePatchwingRes = [self configurePatchwing:&elfPath];
+  if (!configurePatchwingRes) {
+    // No patch exists, or we failed to configure patchwing. This is a fallback.
     // Upstream, this code lives in -(void)loadAOTData:.
     //
     // This is the location where the test fixture places the snapshot file.

@@ -184,7 +184,7 @@ public class FlutterJNI {
       @Nullable String bundlePath,
       @NonNull String appStoragePath,
       @NonNull String engineCachesPath,
-      @Nullable String shorebirdYaml,
+      @Nullable String patchwingYaml,
       @Nullable String version,
       @Nullable String versionCode,
       long initTimeMillis,
@@ -227,23 +227,22 @@ public class FlutterJNI {
         versionCode = String.valueOf(packageInfo.versionCode);
       }
     } catch (PackageManager.NameNotFoundException e) {
-      Log.e(TAG, "Failed to read app version.  Shorebird updater can't run.", e);
+      Log.e(TAG, "Failed to read app version.  Patchwing updater can't run.", e);
     }
 
-    String shorebirdYaml = null;
+    String patchwingYaml = null;
     try {
-      InputStream yaml = context.getAssets().open("flutter_assets/shorebird.yaml");
+        InputStream yaml = context.getAssets().open("flutter_assets/patchwing.yaml");
       BufferedReader r = new BufferedReader(new InputStreamReader(yaml));
       StringBuilder total = new StringBuilder();
       for (String line; (line = r.readLine()) != null; ) {
         total.append(line).append('\n');
       }
-      shorebirdYaml = total.toString();
-      Log.d(TAG, "shorebird.yaml: " + shorebirdYaml);
-    } catch (IOException e) {
-      Log.e(TAG, "Failed to load shorebird.yaml", e);
-      Log.e(TAG, "Did you remember to include shorebird.yaml in your pubspec.yaml's assets?");
-    }
+      patchwingYaml = total.toString();
+        Log.d(TAG, "patchwing.yaml: " + patchwingYaml);
+      } catch (Exception e) {
+        Log.e(TAG, "Failed to load patchwing.yaml", e);
+        Log.e(TAG, "Did you remember to include patchwing.yaml in your pubspec.yaml's assets?");    }
 
     FlutterJNI.nativeInit(
         context,
@@ -251,7 +250,7 @@ public class FlutterJNI {
         bundlePath,
         appStoragePath,
         engineCachesPath,
-        shorebirdYaml,
+        patchwingYaml,
         version,
         versionCode,
         initTimeMillis,

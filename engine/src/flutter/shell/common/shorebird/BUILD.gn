@@ -20,32 +20,32 @@ source_set("snapshots_data_handle") {
   ]
 }
 
-if (shorebird_updater_supported) {
+if (patchwing_updater_supported) {
   action("build_rust_updater") {
     script = "//flutter/shell/common/shorebird/build_rust_updater.py"
 
     # The stamp file gives Ninja a deterministic output to depend on, but
     # we also have to declare the actual static library so consumers
-    # referencing it via `libs = [ shorebird_updater_output_lib ]` find a
+    # referencing it via `libs = [ patchwing_updater_output_lib ]` find a
     # rule that produces it. Without the lib in `outputs`, Ninja errors
     # with `'cargo_target/.../libupdater.a' missing and no known rule to
     # make it` once the cargo target dir lives inside root_out_dir (#124).
     _stamp =
-        "$target_gen_dir/rust_updater_${shorebird_updater_rust_target}.stamp"
+        "$target_gen_dir/rust_updater_${patchwing_updater_rust_target}.stamp"
     outputs = [
       _stamp,
-      shorebird_updater_output_lib,
+      patchwing_updater_output_lib,
     ]
 
     args = [
       "--rust-target",
-      shorebird_updater_rust_target,
+      patchwing_updater_rust_target,
       "--manifest-dir",
-      rebase_path("$shorebird_updater_dir", root_build_dir),
+      rebase_path("$patchwing_updater_dir", root_build_dir),
       "--target-dir",
-      rebase_path("$shorebird_updater_target_dir", root_build_dir),
+      rebase_path("$patchwing_updater_target_dir", root_build_dir),
       "--output-lib",
-      rebase_path("$shorebird_updater_output_lib", root_build_dir),
+      rebase_path("$patchwing_updater_output_lib", root_build_dir),
       "--stamp",
       rebase_path(_stamp, root_build_dir),
     ]
@@ -82,15 +82,15 @@ if (shorebird_updater_supported) {
 
     # Declare inputs so Ninja knows when to re-run the action.
     inputs = [
-      "$shorebird_updater_dir/Cargo.toml",
-      "$shorebird_updater_dir/Cargo.lock",
-      "$shorebird_updater_dir/library/Cargo.toml",
-      "$shorebird_updater_dir/library/build.rs",
-      "$shorebird_updater_dir/library/cbindgen_dart.toml",
-      "$shorebird_updater_dir/library/cbindgen_engine.toml",
-      "$shorebird_updater_dir/library/.cargo/config.toml",
+      "$patchwing_updater_dir/Cargo.toml",
+      "$patchwing_updater_dir/Cargo.lock",
+      "$patchwing_updater_dir/library/Cargo.toml",
+      "$patchwing_updater_dir/library/build.rs",
+      "$patchwing_updater_dir/library/cbindgen_dart.toml",
+      "$patchwing_updater_dir/library/cbindgen_engine.toml",
+      "$patchwing_updater_dir/library/.cargo/config.toml",
     ]
-    inputs += shorebird_updater_rs_sources
+    inputs += patchwing_updater_rs_sources
   }
 }
 
@@ -104,12 +104,12 @@ source_set("updater") {
 
   deps = [ "//flutter/fml" ]
 
-  # For the Rust updater C API (shorebird_report_launch_start, etc.)
+  # For the Rust updater C API (patchwing_report_launch_start, etc.)
   include_dirs = [ "//flutter" ]
 
-  if (shorebird_updater_supported) {
+  if (patchwing_updater_supported) {
     deps += [ ":build_rust_updater" ]
-    libs = [ shorebird_updater_output_lib ]
+    libs = [ patchwing_updater_output_lib ]
 
     if (is_win) {
       libs += [ "userenv.lib" ]
@@ -129,12 +129,12 @@ source_set("shorebird") {
     "//flutter/fml",
     "//flutter/runtime",
     "//flutter/runtime:libdart",
-    # Patchwing W5' (v3.0): pull in shorebird_dart_stubs.{h,cc} which
-    # supplies link-time definitions of Shorebird_SetBaseSnapshots /
-    # Shorebird_ReadLinkHeader. Required after switching from the
-    # Shorebird private dart-sdk fork (which exported these symbols) to
+    # Patchwing W5' (v3.0): pull in patchwing_dart_stubs.{h,cc} which
+    # supplies link-time definitions of Patchwing_SetBaseSnapshots /
+    # Patchwing_ReadLinkHeader. Required after switching from the
+    # Patchwing private dart-sdk fork (which exported these symbols) to
     # upstream dart-sdk (which does not). See
-    # runtime/shorebird/shorebird_dart_stubs.h for context.
+    # runtime/shorebird/patchwing_dart_stubs.h for context.
     "//flutter/runtime/shorebird:patch_cache",
     "//flutter/shell/common",
     "//flutter/shell/platform/embedder:embedder_headers",

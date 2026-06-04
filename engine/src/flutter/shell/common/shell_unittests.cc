@@ -5116,11 +5116,11 @@ TEST_F(ShellTest, ShoulDiscardLayerTreeIfFrameIsSizedIncorrectly) {
 // Test the full boot flow: ReportLaunchStart is called from
 // ResolveIsolateData, then ReportLaunchSuccess from the Shell constructor.
 // Both are guarded to run at most once per process.
-TEST_F(ShellTest, ShorebirdBootFlowCallsLaunchStartThenSuccess) {
-  auto mock = std::make_unique<shorebird::MockUpdater>();
+TEST_F(ShellTest, PatchwingBootFlowCallsLaunchStartThenSuccess) {
+  auto mock = std::make_unique<patchwing::MockUpdater>();
   auto* mock_ptr = mock.get();
-  shorebird::Updater::SetInstanceForTesting(std::move(mock));
-  shorebird::Updater::ResetLaunchStateForTesting();
+  patchwing::Updater::SetInstanceForTesting(std::move(mock));
+  patchwing::Updater::ResetLaunchStateForTesting();
 
   auto settings = CreateSettingsForFixture();
   auto task_runners = GetTaskRunnersForFixture();
@@ -5133,8 +5133,8 @@ TEST_F(ShellTest, ShorebirdBootFlowCallsLaunchStartThenSuccess) {
   EXPECT_EQ(log[1], "ReportLaunchSuccess");
 
   DestroyShell(std::move(shell), task_runners);
-  shorebird::Updater::ResetLaunchStateForTesting();
-  shorebird::Updater::ResetInstanceForTesting();
+  patchwing::Updater::ResetLaunchStateForTesting();
+  patchwing::Updater::ResetInstanceForTesting();
 }
 
 // In add-to-app, multiple engines may be created within a single process.
@@ -5142,11 +5142,11 @@ TEST_F(ShellTest, ShorebirdBootFlowCallsLaunchStartThenSuccess) {
 // updater. This prevents the updater from promoting a newly-downloaded patch
 // to "current_boot" when subsequent engines are still running the original
 // snapshot that was selected at process init time.
-TEST_F(ShellTest, ShorebirdUpdaterReportsOnlyOnceForMultipleShells) {
-  auto mock = std::make_unique<shorebird::MockUpdater>();
+TEST_F(ShellTest, PatchwingUpdaterReportsOnlyOnceForMultipleShells) {
+  auto mock = std::make_unique<patchwing::MockUpdater>();
   auto* mock_ptr = mock.get();
-  shorebird::Updater::SetInstanceForTesting(std::move(mock));
-  shorebird::Updater::ResetLaunchStateForTesting();
+  patchwing::Updater::SetInstanceForTesting(std::move(mock));
+  patchwing::Updater::ResetLaunchStateForTesting();
 
   auto settings = CreateSettingsForFixture();
 
@@ -5173,8 +5173,8 @@ TEST_F(ShellTest, ShorebirdUpdaterReportsOnlyOnceForMultipleShells) {
   DestroyShell(std::move(shell1), task_runners1);
   DestroyShell(std::move(shell2), task_runners2);
 
-  shorebird::Updater::ResetLaunchStateForTesting();
-  shorebird::Updater::ResetInstanceForTesting();
+  patchwing::Updater::ResetLaunchStateForTesting();
+  patchwing::Updater::ResetInstanceForTesting();
 }
 
 }  // namespace testing

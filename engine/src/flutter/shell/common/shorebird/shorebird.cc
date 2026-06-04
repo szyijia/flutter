@@ -46,10 +46,10 @@ extern "C" __attribute__((weak)) unsigned long getauxval(unsigned long type) {
 }
 #endif
 
-#if SHOREBIRD_USE_INTERPRETER
+#if PATCHWING_USE_INTERPRETER
 // Global references to the base (unpatched) snapshots from the App.framework.
 // These are process-global because:
-// 1. The Shorebird updater library is a process-global singleton with its own
+// 1. The Patchwing updater library is a process-global singleton with its own
 //    internal state. FileCallbacksImpl provides it access to the base snapshot
 //    data for patch generation/validation.
 // 2. The base snapshots are immutable (baked into the IPA) so sharing them
@@ -83,7 +83,7 @@ void SetBaseSnapshot(Settings& settings) {
       vm_insns_ptr ? Dart_SnapshotInstrSize(vm_insns_ptr) : -1;
   intptr_t iso_insns_size =
       iso_insns_ptr ? Dart_SnapshotInstrSize(iso_insns_ptr) : -1;
-  FML_LOG(INFO) << "[shorebird] SetBaseSnapshot mappings: "
+  FML_LOG(INFO) << "[patchwing] SetBaseSnapshot mappings: "
                 << "vm_data_size=" << vm_data_size
                 << " iso_data_size=" << iso_data_size
                 << " vm_insns_size=" << vm_insns_size
@@ -91,12 +91,12 @@ void SetBaseSnapshot(Settings& settings) {
                 << (vm_data_size + iso_data_size + vm_insns_size +
                     iso_insns_size);
 
-  Shorebird_SetBaseSnapshots(isolate_snapshot->GetDataMapping(),
+  Patchwing_SetBaseSnapshots(isolate_snapshot->GetDataMapping(),
                              isolate_snapshot->GetInstructionsMapping(),
                              vm_snapshot->GetDataMapping(),
                              vm_snapshot->GetInstructionsMapping());
 }
-#endif  // SHOREBIRD_USE_INTERPRETER
+#endif  // PATCHWING_USE_INTERPRETER
 
 class FileCallbacksImpl {
  public:
@@ -106,7 +106,7 @@ class FileCallbacksImpl {
   static void Close(void* file);
 };
 
-shorebird::FileCallbacks ShorebirdFileCallbacks() {
+patchwing::FileCallbacks PatchwingFileCallbacks() {
   return {
       .open = FileCallbacksImpl::Open,
       .read = FileCallbacksImpl::Read,
@@ -141,26 +141,26 @@ std::string GetValueFromYaml(const std::string& yaml, const std::string& key) {
 
 /// Newer api, used by Desktop implementations.
 /// Does not directly manipulate Settings.
-// TODO(eseidel): Consolidate this with the other ConfigureShorebird() API.
-bool ConfigureShorebird(const ShorebirdConfigArgs& args,
+// TODO(eseidel): Consolidate this with the other ConfigurePatchwing() API.
+bool ConfigurePatchwing(const PatchwingConfigArgs& args,
                         std::string& patch_path) {
   patch_path = args.release_app_library_path;
-  auto shorebird_updater_dir_name = "shorebird_updater";
+  auto patchwing_updater_dir_name = "patchwing_updater";
 
-  // Parse app id from shorebird.yaml
-  std::string app_id = GetValueFromYaml(args.shorebird_yaml, "app_id");
+  // Parse app id from patchwing.yaml
+  std::string app_id = GetValueFromYaml(args.patchwing_yaml, "app_id");
   if (app_id.empty()) {
-    FML_LOG(ERROR) << "Shorebird updater: appid not found in shorebird.yaml";
+    FML_LOG(ERROR) << "Patchwing updater: app_id not found in patchwing.yaml";
     return false;
   }
 
   auto code_cache_dir = fml::paths::JoinPaths(
-      {std::move(args.code_cache_path), shorebird_updater_dir_name, app_id});
+      {std::move(args.code_cache_path), patchwing_updater_dir_name, app_id});
   auto app_storage_dir = fml::paths::JoinPaths(
-      {std::move(args.app_storage_path), shorebird_updater_dir_name, app_id});
+      {std::move(args.app_storage_path), patchwing_updater_dir_name, app_id});
 
   fml::CreateDirectory(fml::paths::GetCachesDirectory(),
-                       {shorebird_updater_dir_name},
+                       {patchwing_updater_dir_name},
                        fml::FilePermission::kReadWrite);
 
   // Combine version and version_code into a single string.
@@ -170,104 +170,104 @@ bool ConfigureShorebird(const ShorebirdConfigArgs& args,
     release_version += "+" + args.release_version.build_number;
   }
 
-  shorebird::AppConfig config;
+  patchwing::AppConfig config;
   config.release_version = release_version;
   config.original_libapp_paths = {args.release_app_library_path};
   config.app_storage_dir = app_storage_dir;
   config.code_cache_dir = code_cache_dir;
-  config.file_callbacks = ShorebirdFileCallbacks();
-  config.yaml_config = args.shorebird_yaml;
+  config.file_callbacks = PatchwingFileCallbacks();
+  config.yaml_config = args.patchwing_yaml;
 
-  bool init_result = shorebird::Updater::Instance().Init(config);
+  bool init_result = patchwing::Updater::Instance().Init(config);
 
   // We do not support synchronous updates on launch, it's a terrible UX.
   // Users can implement custom check-for-updates using
-  // package:shorebird_code_push.
+  // package:patchwing_code_push.
   // https://github.com/shorebirdtech/shorebird/issues/950
 
   FML_LOG(INFO) << "Checking for active patch";
-  shorebird::Updater::Instance().ValidateNextBootPatch();
-  std::string active_path = shorebird::Updater::Instance().NextBootPatchPath();
+  patchwing::Updater::Instance().ValidateNextBootPatch();
+  std::string active_path = patchwing::Updater::Instance().NextBootPatchPath();
   if (!active_path.empty()) {
     patch_path = active_path;
-    FML_LOG(INFO) << "Shorebird updater: patch path: " << patch_path;
+    FML_LOG(INFO) << "Patchwing updater: patch path: " << patch_path;
   } else {
-    FML_LOG(INFO) << "Shorebird updater: no active patch.";
+    FML_LOG(INFO) << "Patchwing updater: no active patch.";
   }
 
-  // Note: shorebird_report_launch_start() is now called from TryLoadFromPatch()
+  // Note: patchwing_report_launch_start() is now called from TryLoadFromPatch()
   // in runtime/shorebird/patch_cache.cc, right before the patched snapshot is
   // actually loaded. This fixes issues with FlutterEngineGroup and other cases
-  // where ConfigureShorebird() is called but no Shell is created.
+  // where ConfigurePatchwing() is called but no Shell is created.
   if (!init_result) {
     return false;
   }
 
-  if (shorebird::Updater::Instance().ShouldAutoUpdate()) {
-    FML_LOG(INFO) << "Starting Shorebird update";
-    shorebird::Updater::Instance().StartUpdateThread();
+  if (patchwing::Updater::Instance().ShouldAutoUpdate()) {
+    FML_LOG(INFO) << "Starting Patchwing update";
+    patchwing::Updater::Instance().StartUpdateThread();
   } else {
     FML_LOG(INFO)
-        << "Shorebird auto_update disabled, not checking for updates.";
+        << "Patchwing auto_update disabled, not checking for updates.";
   }
 
   return true;
 }
 
 /// Older api used by iOS and Android, directly manipulates Settings.
-// TODO(eseidel): Consolidate this with the other ConfigureShorebird() API.
-void ConfigureShorebird(std::string code_cache_path,
+// TODO(eseidel): Consolidate this with the other ConfigurePatchwing() API.
+void ConfigurePatchwing(std::string code_cache_path,
                         std::string app_storage_path,
                         Settings& settings,
-                        const std::string& shorebird_yaml,
+                        const std::string& patchwing_yaml,
                         const std::string& version,
                         const std::string& version_code) {
-  // If you are crashing here, you probably are running Shorebird in a Debug
+  // If you are crashing here, you probably are running Patchwing in a Debug
   // config, where the AOT snapshot won't be linked into the process, and thus
   // lookups will fail.  Change your Scheme to Release to fix:
   // https://github.com/flutter/flutter/wiki/Debugging-the-engine#debugging-ios-builds-with-xcode
   FML_CHECK(DartSnapshot::VMSnapshotFromSettings(settings))
-      << "XCode Scheme must be set to Release to use Shorebird";
+      << "XCode Scheme must be set to Release to use Patchwing";
 
-  auto shorebird_updater_dir_name = "shorebird_updater";
+  auto patchwing_updater_dir_name = "patchwing_updater";
 
   auto code_cache_dir = fml::paths::JoinPaths(
-      {std::move(code_cache_path), shorebird_updater_dir_name});
+      {std::move(code_cache_path), patchwing_updater_dir_name});
   auto app_storage_dir = fml::paths::JoinPaths(
-      {std::move(app_storage_path), shorebird_updater_dir_name});
+      {std::move(app_storage_path), patchwing_updater_dir_name});
 
   fml::CreateDirectory(fml::paths::GetCachesDirectory(),
-                       {shorebird_updater_dir_name},
+                       {patchwing_updater_dir_name},
                        fml::FilePermission::kReadWrite);
 
   // Combine version and version_code into a single string.
   // We could also pass these separately through to the updater if needed.
-  shorebird::AppConfig config;
+  patchwing::AppConfig config;
   config.release_version = version + "+" + version_code;
   config.original_libapp_paths = settings.application_library_paths;
   config.app_storage_dir = app_storage_dir;
   config.code_cache_dir = code_cache_dir;
-  config.file_callbacks = ShorebirdFileCallbacks();
-  config.yaml_config = shorebird_yaml;
+  config.file_callbacks = PatchwingFileCallbacks();
+  config.yaml_config = patchwing_yaml;
 
-  bool init_result = shorebird::Updater::Instance().Init(config);
+  bool init_result = patchwing::Updater::Instance().Init(config);
 
   // We do not support synchronous updates on launch, it's a terrible UX.
   // Users can implement custom check-for-updates using
-  // package:shorebird_code_push.
+  // package:patchwing_code_push.
   // https://github.com/shorebirdtech/shorebird/issues/950
 
   // We only set the base snapshot on iOS for now.
-#if SHOREBIRD_USE_INTERPRETER
+#if PATCHWING_USE_INTERPRETER
   SetBaseSnapshot(settings);
 #endif
 
-  shorebird::Updater::Instance().ValidateNextBootPatch();
-  std::string active_path = shorebird::Updater::Instance().NextBootPatchPath();
+  patchwing::Updater::Instance().ValidateNextBootPatch();
+  std::string active_path = patchwing::Updater::Instance().NextBootPatchPath();
   if (!active_path.empty()) {
-    FML_LOG(INFO) << "Shorebird updater: active path: " << active_path;
+    FML_LOG(INFO) << "Patchwing updater: active path: " << active_path;
 
-#if SHOREBIRD_USE_INTERPRETER
+#if PATCHWING_USE_INTERPRETER
     // On iOS we add the patch to the front of the list instead of clearing
     // the list, to allow dart_snapshot.cc to still find the base snapshot
     // for the vm isolate.
@@ -278,29 +278,29 @@ void ConfigureShorebird(std::string code_cache_path,
     settings.application_library_paths.emplace_back(active_path);
 #endif
   } else {
-    FML_LOG(INFO) << "Shorebird updater: no active patch.";
+    FML_LOG(INFO) << "Patchwing updater: no active patch.";
   }
 
-  // Note: shorebird_report_launch_start() is now called from TryLoadFromPatch()
+  // Note: patchwing_report_launch_start() is now called from TryLoadFromPatch()
   // in runtime/shorebird/patch_cache.cc, right before the patched snapshot is
   // actually loaded. This fixes issues with FlutterEngineGroup and other cases
-  // where ConfigureShorebird() is called but no Shell is created.
+  // where ConfigurePatchwing() is called but no Shell is created.
 
   if (!init_result) {
     return;
   }
 
-  if (shorebird::Updater::Instance().ShouldAutoUpdate()) {
-    FML_LOG(INFO) << "Starting Shorebird update";
-    shorebird::Updater::Instance().StartUpdateThread();
+  if (patchwing::Updater::Instance().ShouldAutoUpdate()) {
+    FML_LOG(INFO) << "Starting Patchwing update";
+    patchwing::Updater::Instance().StartUpdateThread();
   } else {
     FML_LOG(INFO)
-        << "Shorebird auto_update disabled, not checking for updates.";
+        << "Patchwing auto_update disabled, not checking for updates.";
   }
 }
 
 void* FileCallbacksImpl::Open() {
-#if SHOREBIRD_USE_INTERPRETER
+#if PATCHWING_USE_INTERPRETER
   return SnapshotsDataHandle::createForSnapshots(*vm_snapshot,
                                                  *isolate_snapshot)
       .release();
@@ -310,7 +310,7 @@ void* FileCallbacksImpl::Open() {
   // excluding the Mach-O specific headers which contain dates and paths that
   // make them change on every build.
   return nullptr;
-#endif  // SHOREBIRD_USE_INTERPRETER
+#endif  // PATCHWING_USE_INTERPRETER
 }
 
 uintptr_t FileCallbacksImpl::Read(void* file,

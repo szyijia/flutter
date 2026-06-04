@@ -6,7 +6,7 @@
 
 namespace flutter {
 
-gboolean SetUpShorebird(const char* assets_path, std::string& patch_path);
+gboolean SetUpPatchwing(const char* assets_path, std::string& patch_path);
 
 }  // namespace flutter
 

@@ -14,7 +14,7 @@
 #include <vector>
 
 namespace flutter {
-namespace shorebird {
+namespace patchwing {
 
 /// File callbacks for iOS patch loading.
 /// Mirrors the FileCallbacks struct from the Rust updater.
@@ -25,7 +25,7 @@ struct FileCallbacks {
   void (*close)(void* file_handle);
 };
 
-/// Configuration for initializing the Shorebird updater.
+/// Configuration for initializing the Patchwing updater.
 struct AppConfig {
   /// Version string for this release (e.g., "1.0.0+1").
   std::string release_version;
@@ -43,11 +43,11 @@ struct AppConfig {
   /// Callbacks for iOS patch file access (can be null callbacks on Android).
   FileCallbacks file_callbacks;
 
-  /// YAML configuration from shorebird.yaml.
+  /// YAML configuration from patchwing.yaml.
   std::string yaml_config;
 };
 
-/// Abstract interface for the Shorebird updater.
+/// Abstract interface for the Patchwing updater.
 ///
 /// This abstraction allows for:
 /// 1. Mocking in tests without requiring the real Rust library
@@ -149,7 +149,7 @@ class NoOpUpdater : public Updater {
   void StartUpdateThread() override {}
 };
 
-#if SHOREBIRD_PLATFORM_SUPPORTED
+#if PATCHWING_PLATFORM_SUPPORTED
 /// Production implementation that wraps the Rust updater C API.
 /// Only available on supported platforms (Android, iOS, macOS, Windows, Linux).
 class RealUpdater : public Updater {
@@ -166,7 +166,7 @@ class RealUpdater : public Updater {
   bool ShouldAutoUpdate() override;
   void StartUpdateThread() override;
 };
-#endif  // SHOREBIRD_PLATFORM_SUPPORTED
+#endif  // PATCHWING_PLATFORM_SUPPORTED
 
 /// Mock implementation for testing.
 /// Tracks call counts and can be queried to verify behavior.
@@ -224,7 +224,7 @@ class MockUpdater : public Updater {
   std::vector<std::string> call_log_;
 };
 
-}  // namespace shorebird
+}  // namespace patchwing
 }  // namespace flutter
 
 #endif  // FLUTTER_SHELL_COMMON_SHOREBIRD_UPDATER_H_

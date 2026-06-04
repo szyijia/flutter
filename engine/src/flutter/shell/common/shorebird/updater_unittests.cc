@@ -7,7 +7,7 @@
 #include "gtest/gtest.h"
 
 namespace flutter {
-namespace shorebird {
+namespace patchwing {
 namespace testing {
 
 class UpdaterTest : public ::testing::Test {
@@ -179,5 +179,5 @@ TEST_F(UpdaterTest, ResetLaunchStateReenablesGuards) {
 }
 
 }  // namespace testing
-}  // namespace shorebird
+}  // namespace patchwing
 }  // namespace flutter

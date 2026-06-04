@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2024 The Shorebird Authors. All rights reserved.
+# Copyright 2024 The Patchwing Authors. All rights reserved.
 # Use of this source code is governed by a MIT-style license that can be
 # found in the LICENSE file.
 

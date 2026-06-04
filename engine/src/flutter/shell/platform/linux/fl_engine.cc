@@ -862,14 +862,14 @@ gboolean fl_engine_start(FlEngine* self, GError** error) {
     FlutterEngineAOTDataSource source = {};
     source.type = kFlutterEngineAOTDataSourceTypeElfPath;
     std::string patch_path;
-    auto setup_shorebird_result =
-        flutter::SetUpShorebird(args.assets_path, patch_path);
-    if (setup_shorebird_result) {
+    auto setup_patchwing_result =
+        flutter::SetUpPatchwing(args.assets_path, patch_path);
+    if (setup_patchwing_result) {
       // If we have a patch installed, we replace the default AOT library path
       // with the patch path here.
       source.elf_path = patch_path.c_str();
     } else {
-      FML_LOG(ERROR) << "Failed to configure Shorebird.";
+      FML_LOG(ERROR) << "Failed to configure Patchwing.";
       source.elf_path = fl_dart_project_get_aot_library_path(self->project);
     }
 

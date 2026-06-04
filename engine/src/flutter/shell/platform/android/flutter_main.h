@@ -44,7 +44,7 @@ class FlutterMain {
                    jstring kernelPath,
                    jstring appStoragePath,
                    jstring engineCachesPath,
-                   jstring shorebirdYaml,
+                   jstring patchwingYaml,
                    jstring version,
                    jstring versionCode,
                    jlong initTimeMillis,
