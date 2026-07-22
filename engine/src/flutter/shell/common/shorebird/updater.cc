@@ -100,41 +100,41 @@ bool RealUpdater::Init(const AppConfig& config) {
   rust_callbacks.seek = config.file_callbacks.seek;
   rust_callbacks.close = config.file_callbacks.close;
 
-  return shorebird_init(&params, rust_callbacks, config.yaml_config.c_str());
+  return patchwing_init(&params, rust_callbacks, config.yaml_config.c_str());
 }
 
 void RealUpdater::ValidateNextBootPatch() {
-  shorebird_validate_next_boot_patch();
+  patchwing_validate_next_boot_patch();
 }
 
 std::string RealUpdater::NextBootPatchPath() {
-  char* c_path = shorebird_next_boot_patch_path();
+  char* c_path = patchwing_next_boot_patch_path();
   if (c_path == nullptr) {
     return "";
   }
   std::string path(c_path);
-  shorebird_free_string(c_path);
+  patchwing_free_string(c_path);
   return path;
 }
 
 void RealUpdater::DoReportLaunchStart() {
-  shorebird_report_launch_start();
+  patchwing_report_launch_start();
 }
 
 void RealUpdater::DoReportLaunchSuccess() {
-  shorebird_report_launch_success();
+  patchwing_report_launch_success();
 }
 
 void RealUpdater::DoReportLaunchFailure() {
-  shorebird_report_launch_failure();
+  patchwing_report_launch_failure();
 }
 
 bool RealUpdater::ShouldAutoUpdate() {
-  return shorebird_should_auto_update();
+  return patchwing_should_auto_update();
 }
 
 void RealUpdater::StartUpdateThread() {
-  shorebird_start_update_thread();
+  patchwing_start_update_thread();
 }
 #endif  // SHOREBIRD_PLATFORM_SUPPORTED
 
