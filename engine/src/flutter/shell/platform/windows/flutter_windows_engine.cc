@@ -18,7 +18,7 @@
 #include "flutter/fml/paths.h"
 #include "flutter/fml/platform/win/wstring_conversion.h"
 #include "flutter/fml/synchronization/waitable_event.h"
-#include "flutter/shell/common/shorebird/shorebird.h"
+#include "flutter/shell/common/patchwing/patchwing.h"
 #include "flutter/shell/platform/common/client_wrapper/binary_messenger_impl.h"
 #include "flutter/shell/platform/common/client_wrapper/include/flutter/standard_message_codec.h"
 #include "flutter/shell/platform/common/path_utils.h"
@@ -361,13 +361,13 @@ bool GetLocalAppDataPath(std::string& outPath) {
   return true;
 }
 
-bool SetUpShorebird(std::string assets_path_string, std::string& patch_path) {
-  auto shorebird_yaml_path =
-      fml::paths::JoinPaths({assets_path_string, "shorebird.yaml"});
-  std::string shorebird_yaml_contents("");
-  if (!filesystem::ReadFileToString(shorebird_yaml_path,
-                                    &shorebird_yaml_contents)) {
-    FML_LOG(ERROR) << "Failed to read shorebird.yaml.";
+bool SetUpPatchwing(std::string assets_path_string, std::string& patch_path) {
+  auto patchwing_yaml_path =
+      fml::paths::JoinPaths({assets_path_string, "patchwing.yaml"});
+  std::string patchwing_yaml_contents("");
+  if (!filesystem::ReadFileToString(patchwing_yaml_path,
+                                    &patchwing_yaml_contents)) {
+    FML_LOG(ERROR) << "Failed to read patchwing.yaml.";
     return false;
   }
 
@@ -389,9 +389,9 @@ bool SetUpShorebird(std::string assets_path_string, std::string& patch_path) {
     return false;
   }
 
-  ShorebirdConfigArgs shorebird_args(code_cache_path, code_cache_path, app_path,
-                                     shorebird_yaml_contents, release_version);
-  return ConfigureShorebird(shorebird_args, patch_path);
+  PatchwingConfigArgs patchwing_args(code_cache_path, code_cache_path, app_path,
+                                     patchwing_yaml_contents, release_version);
+  return ConfigurePatchwing(patchwing_args, patch_path);
 }
 
 bool FlutterWindowsEngine::Run(std::string_view entrypoint) {
@@ -403,14 +403,14 @@ bool FlutterWindowsEngine::Run(std::string_view entrypoint) {
   std::string icu_path_string = fml::PathToUtf8(project_->icu_path());
 
   std::string patch_path;
-  auto setup_shorebird_result = SetUpShorebird(assets_path_string, patch_path);
-  if (setup_shorebird_result) {
+  auto setup_patchwing_result = SetUpPatchwing(assets_path_string, patch_path);
+  if (setup_patchwing_result) {
     // If we have a patch installed, we replace the default AOT library path
     // with the patch path here.
     FML_LOG(INFO) << "Setting project patch path: " << patch_path;
     project_->SetAotLibraryPath(patch_path);
   } else {
-    FML_LOG(ERROR) << "Failed to configure Shorebird.";
+    FML_LOG(ERROR) << "Failed to configure Patchwing.";
   }
 
   // This loads AOT data from the project_'s aot_library_path_.

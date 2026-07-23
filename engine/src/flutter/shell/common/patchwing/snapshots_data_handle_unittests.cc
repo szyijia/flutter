@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 
-#include "flutter/shell/common/shorebird/snapshots_data_handle.h"
+#include "flutter/shell/common/patchwing/snapshots_data_handle.h"
 
 #include "flutter/fml/mapping.h"
 #include "flutter/runtime/dart_snapshot.h"

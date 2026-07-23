@@ -326,7 +326,7 @@ if (is_mac) {
 
 if (host_os == "win") {
   # This rule archives both gen_snapshot *and* analyze_snapshot. The name is
-  # misleading. We (shorebird) have updated this rule to include
+  # misleading. We (patchwing) have updated this rule to include
   # analyze_snapshot but did not update the name because it is referenced
   # elsewhere in the tooling.
   zip_bundle("archive_win_gen_snapshot") {

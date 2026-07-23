@@ -114,14 +114,14 @@ source_set("runtime") {
     "//flutter/fml",
     "//flutter/lib/io",
     "//flutter/shell/common:display",
-    "//flutter/shell/common/shorebird:updater",
+    "//flutter/shell/common/patchwing:updater",
     "//flutter/skia",
     "//flutter/third_party/tonic",
     "//flutter/txt",
   ]
 
   if (is_ios) {
-    deps += [ "//flutter/runtime/shorebird:patch_cache" ]
+    deps += [ "//flutter/runtime/patchwing:patch_cache" ]
   }
 }
 

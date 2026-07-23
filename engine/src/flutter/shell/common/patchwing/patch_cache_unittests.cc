@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "flutter/runtime/shorebird/patch_cache.h"
+#include "flutter/runtime/patchwing/patch_cache.h"
 
 #include <string>
 #include <vector>

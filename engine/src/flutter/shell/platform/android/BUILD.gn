@@ -171,7 +171,7 @@ source_set("flutter_shell_native_src") {
     "//flutter/runtime",
     "//flutter/runtime:libdart",
     "//flutter/shell/common",
-    "//flutter/shell/common/shorebird",
+    "//flutter/shell/common/patchwing",
     "//flutter/shell/platform/android/context",
     "//flutter/shell/platform/android/external_view_embedder",
     "//flutter/shell/platform/android/jni",
@@ -811,7 +811,7 @@ if (target_cpu != "x86") {
 }
 
 # Build analyze_snapshot for 64-bit target CPUs on linux.
-# Or always targeting arm64 for Shorebird builds.
+# Or always targeting arm64 for Patchwing builds.
 if ((host_os == "linux" && (target_cpu == "x64" || target_cpu == "riscv64")) ||
     target_cpu == "arm64") {
   zip_bundle("analyze_snapshot") {

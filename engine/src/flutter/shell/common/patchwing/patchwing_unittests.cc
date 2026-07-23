@@ -1,17 +1,17 @@
-#include "flutter/shell/common/shorebird/shorebird.h"
+#include "flutter/shell/common/patchwing/patchwing.h"
 
 #include "gtest/gtest.h"
 
 namespace flutter {
 namespace testing {
-TEST(Shorebird, GetValueFromYamlValueExists) {
+TEST(Patchwing, GetValueFromYamlValueExists) {
   std::string yaml = "appid: com.example.app\nversion: 1.0.0\n";
   std::string key = "appid";
   std::string value = GetValueFromYaml(yaml, key);
   EXPECT_EQ(value, "com.example.app");
 }
 
-TEST(Shorebird, GetValueFromYamlValueDoesNotExist) {
+TEST(Patchwing, GetValueFromYamlValueDoesNotExist) {
   std::string yaml = "appid: com.example.app\nversion: 1.0.0\n";
   std::string key = "appid2";
   std::string value = GetValueFromYaml(yaml, key);

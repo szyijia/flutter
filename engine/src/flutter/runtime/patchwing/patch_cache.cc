@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "flutter/runtime/shorebird/patch_cache.h"
+#include "flutter/runtime/patchwing/patch_cache.h"
 
 #include <mutex>
 
 #include "flutter/fml/logging.h"
 #include "flutter/fml/mapping.h"
-#include "flutter/runtime/shorebird/patch_mapping.h"
+#include "flutter/runtime/patchwing/patch_mapping.h"
 #include "third_party/dart/runtime/include/dart_api.h"
 
 namespace flutter {
@@ -28,7 +28,7 @@ constexpr const char* kIsolateInstructionsSymbol =
 
 std::shared_ptr<PatchCacheEntry> PatchCacheEntry::Create(
     const std::string& path) {
-  // vmcode files currently use ELF internally after a prefix of a Shorebird
+  // vmcode files currently use ELF internally after a prefix of a Patchwing
   // linker header.
   auto elf_mapping = fml::FileMapping::CreateReadOnly(path);
   if (!elf_mapping) {
@@ -36,7 +36,7 @@ std::shared_ptr<PatchCacheEntry> PatchCacheEntry::Create(
     return nullptr;
   }
 
-  int elf_file_offset = Shorebird_ReadLinkHeader(elf_mapping->GetMapping(),
+  int elf_file_offset = Patchwing_ReadLinkHeader(elf_mapping->GetMapping(),
                                                  elf_mapping->GetSize());
 
   const char* error = nullptr;
@@ -128,7 +128,7 @@ std::shared_ptr<const fml::Mapping> TryLoadFromPatch(
     return nullptr;
   }
 
-  // Check if the first path is a Shorebird patch (.vmcode file)
+  // Check if the first path is a Patchwing patch (.vmcode file)
   const auto& patch_path = native_library_paths.front();
   bool is_patch = patch_path.find(".vmcode") != std::string::npos;
   if (!is_patch) {

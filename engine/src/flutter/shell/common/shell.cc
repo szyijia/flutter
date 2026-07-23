@@ -47,7 +47,7 @@
 #include "third_party/skia/include/core/SkGraphics.h"
 #include "third_party/tonic/common/log.h"
 
-#include "flutter/shell/common/shorebird/updater.h"
+#include "flutter/shell/common/patchwing/updater.h"
 
 namespace flutter {
 
@@ -524,7 +524,7 @@ Shell::Shell(DartVMRef vm,
       is_gpu_disabled_sync_switch_(new fml::SyncSwitch(is_gpu_disabled)),
       weak_factory_gpu_(nullptr),
       weak_factory_(this) {
-  // Report launch outcome to the Shorebird updater for crash recovery.
+  // Report launch outcome to the Patchwing updater for crash recovery.
   // If the VM failed to start, we report failure so the updater can roll
   // back the patch. These calls are guarded inside Updater to execute at
   // most once per process — only the first Shell's outcome is reported.
@@ -532,9 +532,9 @@ Shell::Shell(DartVMRef vm,
   // boot from the same snapshot that was already reported on.
   // On unsupported platforms, NoOpUpdater handles these calls gracefully.
   if (!vm_) {
-    shorebird::Updater::Instance().ReportLaunchFailure();
+    patchwing::Updater::Instance().ReportLaunchFailure();
   } else {
-    shorebird::Updater::Instance().ReportLaunchSuccess();
+    patchwing::Updater::Instance().ReportLaunchSuccess();
   }
   FML_CHECK(!settings.enable_software_rendering || !settings.enable_impeller)
       << "Software rendering is incompatible with Impeller.";

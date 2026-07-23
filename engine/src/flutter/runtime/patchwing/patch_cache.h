@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef FLUTTER_RUNTIME_SHOREBIRD_PATCH_CACHE_H_
-#define FLUTTER_RUNTIME_SHOREBIRD_PATCH_CACHE_H_
+#ifndef FLUTTER_RUNTIME_PATCHWING_PATCH_CACHE_H_
+#define FLUTTER_RUNTIME_PATCHWING_PATCH_CACHE_H_
 
 #include <map>
 #include <memory>
@@ -81,7 +81,7 @@ class PatchCache {
   FML_DISALLOW_COPY_AND_ASSIGN(PatchCache);
 };
 
-/// Checks if the first path in native_library_paths is a Shorebird patch
+/// Checks if the first path in native_library_paths is a Patchwing patch
 /// (.vmcode file) and if so, attempts to load the requested symbol from
 /// the patch.
 ///
@@ -101,4 +101,4 @@ std::shared_ptr<const fml::Mapping> TryLoadFromPatch(
 
 }  // namespace flutter
 
-#endif  // FLUTTER_RUNTIME_SHOREBIRD_PATCH_CACHE_H_
+#endif  // FLUTTER_RUNTIME_PATCHWING_PATCH_CACHE_H_

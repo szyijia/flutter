@@ -2,16 +2,16 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "flutter/shell/common/shorebird/updater.h"
+#include "flutter/shell/common/patchwing/updater.h"
 
 #include "flutter/fml/logging.h"
 
-#if SHOREBIRD_PLATFORM_SUPPORTED
+#if PATCHWING_PLATFORM_SUPPORTED
 #include "third_party/updater/library/include/updater_engine.h"
 #endif
 
 namespace flutter {
-namespace shorebird {
+namespace patchwing {
 
 // Static member definitions
 std::unique_ptr<Updater> Updater::instance_;
@@ -22,7 +22,7 @@ std::atomic<bool> Updater::launch_completed_{false};
 Updater& Updater::Instance() {
   std::lock_guard<std::mutex> lock(instance_mutex_);
   if (!instance_) {
-#if SHOREBIRD_PLATFORM_SUPPORTED
+#if PATCHWING_PLATFORM_SUPPORTED
     instance_ = std::make_unique<RealUpdater>();
 #else
     instance_ = std::make_unique<NoOpUpdater>();
@@ -75,7 +75,7 @@ void Updater::ReportLaunchFailure() {
   DoReportLaunchFailure();
 }
 
-#if SHOREBIRD_PLATFORM_SUPPORTED
+#if PATCHWING_PLATFORM_SUPPORTED
 // RealUpdater implementation - wraps the Rust C API
 
 bool RealUpdater::Init(const AppConfig& config) {
@@ -136,7 +136,7 @@ bool RealUpdater::ShouldAutoUpdate() {
 void RealUpdater::StartUpdateThread() {
   patchwing_start_update_thread();
 }
-#endif  // SHOREBIRD_PLATFORM_SUPPORTED
+#endif  // PATCHWING_PLATFORM_SUPPORTED
 
 // MockUpdater implementation - for testing
 
@@ -198,5 +198,5 @@ void MockUpdater::Reset() {
   call_log_.clear();
 }
 
-}  // namespace shorebird
+}  // namespace patchwing
 }  // namespace flutter

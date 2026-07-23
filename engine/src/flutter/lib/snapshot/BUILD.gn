@@ -51,7 +51,7 @@ group("generate_snapshot_bins") {
   }
 
   # Build analyze_snapshot for 64-bit target CPUs on linux only.
-  # patchwing: removed the "|| target_cpu == arm64" condition that Shorebird
+  # patchwing: removed the "|| target_cpu == arm64" condition that Patchwing
   # added for iOS support — it causes GN errors on mac with upstream dart-sdk.
   if (host_os == "linux" &&
       (target_cpu == "x64" || target_cpu == "arm64" ||
@@ -265,7 +265,7 @@ if (host_os == "mac" &&
     ]
   }
 
-  # Added by shorebird.
+  # Added by patchwing.
   # analyze_snapshot targets below were copied from the gen_snapshot targets
   # above to allow us to include analyze_snapshot in the artifacts generated
   # for create_ios_framework.py.

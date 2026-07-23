@@ -20,7 +20,7 @@
 #include "flutter/fml/platform/android/paths_android.h"
 #include "flutter/lib/ui/plugins/callback_cache.h"
 #include "flutter/runtime/dart_vm.h"
-#include "flutter/shell/common/shorebird/shorebird.h"
+#include "flutter/shell/common/patchwing/patchwing.h"
 #include "flutter/shell/common/switches.h"
 #include "flutter/shell/platform/android/android_context_vk_impeller.h"
 #include "flutter/shell/platform/android/android_rendering_selector.h"
@@ -94,7 +94,7 @@ void FlutterMain::Init(JNIEnv* env,
                        jstring kernelPath,
                        jstring appStoragePath,
                        jstring engineCachesPath,
-                       jstring shorebirdYaml,
+                       jstring patchwingYaml,
                        jstring version,
                        jstring versionCode,
                        jlong initTimeMillis,
@@ -160,12 +160,12 @@ void FlutterMain::Init(JNIEnv* env,
   fml::paths::InitializeAndroidCachesPath(code_cache_path);
 
 #if FLUTTER_RELEASE
-  std::string shorebird_yaml = fml::jni::JavaStringToString(env, shorebirdYaml);
+  std::string patchwing_yaml = fml::jni::JavaStringToString(env, patchwingYaml);
   std::string version_string = fml::jni::JavaStringToString(env, version);
   std::string version_code_string =
       fml::jni::JavaStringToString(env, versionCode);
-  ConfigureShorebird(code_cache_path, app_storage_path, settings,
-                     shorebird_yaml, version_string, version_code_string);
+  ConfigurePatchwing(code_cache_path, app_storage_path, settings,
+                     patchwing_yaml, version_string, version_code_string);
 #endif
 
   flutter::DartCallbackCache::LoadCacheFromDisk();
