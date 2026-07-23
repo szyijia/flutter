@@ -19,7 +19,7 @@ vars = {
   "dart_sdk_git": "https://dart.googlesource.com/sdk.git",
   # [patchwing] updater 已 fork 到 szyijia/updater 的 patchwing/main 分支（B1: PWNGDIF1 bidiff 双格式）
   "updater_git": "https://github.com/szyijia/updater.git",
-  "updater_rev": "2e1fd70464fcad4fda5a97253cdddc8e1b988f3f",
+  "updater_rev": "bda8fb9980b350935c9b68cfa5e22582b7c6c658",
   'skia_revision': 'e9ed4fc9f1544c58d8a9347c1fc9471d8dd7c465',
 
   # WARNING: DO NOT EDIT canvaskit_cipd_instance MANUALLY
