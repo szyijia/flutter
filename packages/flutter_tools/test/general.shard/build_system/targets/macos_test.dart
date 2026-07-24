@@ -766,7 +766,7 @@ void main() {
   );
 
   testUsingContext(
-    'ReleaseMacOSBundleFlutterAssets updates shorebird.yaml if present',
+    'ReleaseMacOSBundleFlutterAssets updates patchwing.yaml if present',
     () async {
       environment.defines[kBuildMode] = 'release';
       environment.defines[kXcodeAction] = 'install';
@@ -788,18 +788,18 @@ void main() {
       // Set up native_assets.json (required by MacOSBundleFlutterAssets)
       environment.buildDir.childFile('native_assets.json').createSync();
 
-      // Set up pubspec.yaml with shorebird.yaml as an asset
+      // Set up pubspec.yaml with patchwing.yaml as an asset
       fileSystem.file('pubspec.yaml')
         ..createSync()
         ..writeAsStringSync('''
 name: example
 flutter:
   assets:
-    - shorebird.yaml
+    - patchwing.yaml
 ''');
 
-      // Create the shorebird.yaml asset file
-      fileSystem.file('shorebird.yaml')
+      // Create the patchwing.yaml asset file
+      fileSystem.file('patchwing.yaml')
         ..createSync()
         ..writeAsStringSync('''
 # Some other text that should be removed
@@ -822,7 +822,7 @@ flavors:
         'A',
         'Resources',
         'flutter_assets',
-        'shorebird.yaml',
+        'patchwing.yaml',
       );
       expect(fileSystem.file(shorebirdYamlPath).readAsStringSync(), 'app_id: internal-app-id');
     },

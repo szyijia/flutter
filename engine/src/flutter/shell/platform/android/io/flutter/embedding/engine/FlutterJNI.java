@@ -232,17 +232,17 @@ public class FlutterJNI {
 
     String shorebirdYaml = null;
     try {
-      InputStream yaml = context.getAssets().open("flutter_assets/shorebird.yaml");
+      InputStream yaml = context.getAssets().open("flutter_assets/patchwing.yaml");
       BufferedReader r = new BufferedReader(new InputStreamReader(yaml));
       StringBuilder total = new StringBuilder();
       for (String line; (line = r.readLine()) != null; ) {
         total.append(line).append('\n');
       }
       shorebirdYaml = total.toString();
-      Log.d(TAG, "shorebird.yaml: " + shorebirdYaml);
+      Log.d(TAG, "patchwing.yaml: " + shorebirdYaml);
     } catch (IOException e) {
-      Log.e(TAG, "Failed to load shorebird.yaml", e);
-      Log.e(TAG, "Did you remember to include shorebird.yaml in your pubspec.yaml's assets?");
+      Log.e(TAG, "Failed to load patchwing.yaml", e);
+      Log.e(TAG, "Did you remember to include patchwing.yaml in your pubspec.yaml's assets?");
     }
 
     FlutterJNI.nativeInit(

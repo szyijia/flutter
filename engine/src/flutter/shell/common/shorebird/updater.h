@@ -43,7 +43,7 @@ struct AppConfig {
   /// Callbacks for iOS patch file access (can be null callbacks on Android).
   FileCallbacks file_callbacks;
 
-  /// YAML configuration from shorebird.yaml.
+  /// YAML configuration from patchwing.yaml.
   std::string yaml_config;
 };
 

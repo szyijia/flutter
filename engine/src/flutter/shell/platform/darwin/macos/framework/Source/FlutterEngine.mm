@@ -665,7 +665,7 @@ static void SetThreadPriority(FlutterThreadPriority priority) {
                                    URLByAppendingPathComponent:@"App.framework"]] bundlePath];
   bundlePath = [bundlePath stringByAppendingString:@"/App"];
   NSString* assetsPath = _project.assetsPath;
-  NSURL* shorebirdYamlPath = [NSURL URLWithString:@"shorebird.yaml"
+  NSURL* shorebirdYamlPath = [NSURL URLWithString:@"patchwing.yaml"
                                     relativeToURL:[NSURL fileURLWithPath:assetsPath]];
   NSString* shorebirdYamlContents = [NSString stringWithContentsOfURL:shorebirdYamlPath
                                                              encoding:NSUTF8StringEncoding

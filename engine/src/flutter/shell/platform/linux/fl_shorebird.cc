@@ -16,11 +16,11 @@ namespace flutter {
 
 gboolean SetUpShorebird(const char* assets_path, std::string& patch_path) {
   auto shorebird_yaml_path =
-      fml::paths::JoinPaths({assets_path, "shorebird.yaml"});
+      fml::paths::JoinPaths({assets_path, "patchwing.yaml"});
   std::string shorebird_yaml_contents("");
   if (!filesystem::ReadFileToString(shorebird_yaml_path,
                                     &shorebird_yaml_contents)) {
-    FML_LOG(ERROR) << "Failed to read shorebird.yaml.";
+    FML_LOG(ERROR) << "Failed to read patchwing.yaml.";
     return false;
   }
 

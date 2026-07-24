@@ -111,7 +111,7 @@ Future<void> _createFlutterProject(Directory projectDirectory) async {
 Directory? _templateProject;
 
 /// Creates (or returns the cached) template Flutter project with
-/// shorebird.yaml configured. The first call runs `flutter create` and
+/// patchwing.yaml configured. The first call runs `flutter create` and
 /// `flutter build apk` to warm up Gradle caches.
 ///
 /// Call this from `setUpAll` so the expensive setup runs outside per-test
@@ -132,11 +132,11 @@ Future<Directory> _getTemplateProject() async {
   templateDir.pubspecFile.writeAsStringSync('''
 ${templateDir.pubspecFile.readAsStringSync()}
   assets:
-    - shorebird.yaml
+    - patchwing.yaml
 ''');
 
   File(
-    path.join(templateDir.path, 'shorebird.yaml'),
+    path.join(templateDir.path, 'patchwing.yaml'),
   ).writeAsStringSync('''
 app_id: "123"
 ''');
@@ -217,7 +217,7 @@ extension ShorebirdProjectDirectoryOnDirectory on Directory {
       );
 
   File get shorebirdFile => File(
-        path.join(this.path, 'shorebird.yaml'),
+        path.join(this.path, 'patchwing.yaml'),
       );
 
   YamlMap get shorebirdYaml =>
@@ -400,7 +400,7 @@ $flavors
         'apk-extracted',
         'assets',
         'flutter_assets',
-        'shorebird.yaml',
+        'patchwing.yaml',
       ),
     ).readAsStringSync();
     return loadYaml(yamlString) as YamlMap;
@@ -416,7 +416,7 @@ $flavors
         'Frameworks',
         'App.framework',
         'flutter_assets',
-        'shorebird.yaml',
+        'patchwing.yaml',
       ),
     ).readAsStringSync();
     return loadYaml(yamlString) as YamlMap;

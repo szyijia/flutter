@@ -146,10 +146,10 @@ bool ConfigureShorebird(const ShorebirdConfigArgs& args,
   patch_path = args.release_app_library_path;
   auto shorebird_updater_dir_name = "shorebird_updater";
 
-  // Parse app id from shorebird.yaml
+  // Parse app id from patchwing.yaml
   std::string app_id = GetValueFromYaml(args.shorebird_yaml, "app_id");
   if (app_id.empty()) {
-    FML_LOG(ERROR) << "Shorebird updater: appid not found in shorebird.yaml";
+    FML_LOG(ERROR) << "Shorebird updater: appid not found in patchwing.yaml";
     return false;
   }
 

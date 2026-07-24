@@ -363,11 +363,11 @@ bool GetLocalAppDataPath(std::string& outPath) {
 
 bool SetUpShorebird(std::string assets_path_string, std::string& patch_path) {
   auto shorebird_yaml_path =
-      fml::paths::JoinPaths({assets_path_string, "shorebird.yaml"});
+      fml::paths::JoinPaths({assets_path_string, "patchwing.yaml"});
   std::string shorebird_yaml_contents("");
   if (!filesystem::ReadFileToString(shorebird_yaml_path,
                                     &shorebird_yaml_contents)) {
-    FML_LOG(ERROR) << "Failed to read shorebird.yaml.";
+    FML_LOG(ERROR) << "Failed to read patchwing.yaml.";
     return false;
   }
 

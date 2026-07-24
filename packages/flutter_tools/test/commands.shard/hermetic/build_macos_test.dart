@@ -1429,7 +1429,7 @@ STDERR STUFF
       createMinimalMockProjectFiles();
       final File shorebirdYamlFile =
           fileSystem.file(
-              'build/macos/Build/Products/Release/example.app/Contents/Frameworks/App.framework/Resources/flutter_assets/shorebird.yaml',
+              'build/macos/Build/Products/Release/example.app/Contents/Frameworks/App.framework/Resources/flutter_assets/patchwing.yaml',
             )
             ..createSync(recursive: true)
             ..writeAsStringSync('app_id: my-app-id');
@@ -1448,7 +1448,7 @@ STDERR STUFF
       FeatureFlags: () => TestFeatureFlags(isMacOSEnabled: true),
       OperatingSystemUtils: () => FakeOperatingSystemUtils(hostPlatform: HostPlatform.darwin_x64),
     },
-    // SHOREBIRD_PUBLIC_KEY → shorebird.yaml injection happens inside the
+    // SHOREBIRD_PUBLIC_KEY → patchwing.yaml injection happens inside the
     // assets build target, which TestBuildSystem.all stubs out entirely.
     // Exercising it needs a real build system or a direct updateShorebirdYaml
     // call; skip until that rework lands.

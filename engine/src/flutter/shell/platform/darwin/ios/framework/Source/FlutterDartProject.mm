@@ -168,7 +168,7 @@ flutter::Settings FLTDefaultSettingsForBundle(NSBundle* bundle, NSProcessInfo* p
   // Support/shorebird/shorebird_updater
   std::string cache_path =
       fml::paths::JoinPaths({getenv("HOME"), "Library/Application Support/shorebird"});
-  NSURL* shorebirdYamlPath = [NSURL URLWithString:@"shorebird.yaml"
+  NSURL* shorebirdYamlPath = [NSURL URLWithString:@"patchwing.yaml"
                                     relativeToURL:[NSURL fileURLWithPath:assetsPath]];
   NSString* appVersion = [mainBundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
   NSString* appBuildNumber = [mainBundle objectForInfoDictionaryKey:@"CFBundleVersion"];
@@ -182,7 +182,7 @@ flutter::Settings FLTDefaultSettingsForBundle(NSBundle* bundle, NSProcessInfo* p
     flutter::ConfigureShorebird(cache_path, cache_path, settings, shorebirdYamlContents.UTF8String,
                                 appVersion.UTF8String, appBuildNumber.UTF8String);
   } else {
-    NSLog(@"Failed to find shorebird.yaml, not starting updater.");
+    NSLog(@"Failed to find patchwing.yaml, not starting updater.");
   }
 
   // Domain network configuration
