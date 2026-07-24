@@ -15,8 +15,10 @@ vars = {
   'flutter_git': 'https://flutter.googlesource.com',
   'skia_git': 'https://skia.googlesource.com',
   'llvm_git': 'https://llvm.googlesource.com',
-  "dart_sdk_revision": "98116461144f4429ab873f8497023a5ec3b08127",
-  "dart_sdk_git": "https://dart.googlesource.com/sdk.git",
+  # [patchwing] dart-sdk 已 fork 到 szyijia/dart-sdk 的 main 分支（M2/M3：
+  # elf_loader kReadOnly + patchwing_runtime + 混合模式 stub/模拟器路由）
+  "dart_sdk_revision": "108291e1f7c5ca3474eeed747102b0d30cca8294",
+  "dart_sdk_git": "https://github.com/szyijia/dart-sdk.git",
   # [patchwing] updater 已 fork 到 szyijia/updater 的 patchwing/main 分支（B1: PWNGDIF1 bidiff 双格式）
   "updater_git": "https://github.com/szyijia/updater.git",
   "updater_rev": "bda8fb9980b350935c9b68cfa5e22582b7c6c658",

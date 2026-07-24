@@ -4,6 +4,7 @@
 
 #include "flutter/runtime/patchwing/patch_mapping.h"
 
+#include "flutter/runtime/patchwing/patchwing_dart_stubs.h"
 #include "third_party/dart/runtime/include/dart_native_api.h"
 
 namespace flutter {

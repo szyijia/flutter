@@ -557,9 +557,12 @@ def to_gn_args(args):
   # Make the Dart VM include a simulator, even though it is generating arm64
   # code on an arm64 device, so that it can fall back to interpreting the arm64
   # code if the device does not support JITing.
-  if runtime_mode == 'debug' and gn_args[
-      'target_os'] == 'ios' and not gn_args['use_ios_simulator'] and gn_args[
-          'target_cpu'] == 'arm64' and gn_args['dart_target_arch'] == 'arm64':
+  # [patchwing] 扩展官方 debug-only 条件到全部 runtime_mode：iOS 热更新的
+  # 混合模式要求 release/product VM 也内嵌 ARM64 模拟器（变更函数解释执行，
+  # 规避 App Store 对下载机器码的限制）。官方 debug 构建已实证 SIMARM64 在
+  # iOS ARM64 真机可行。
+  if gn_args['target_os'] == 'ios' and not gn_args['use_ios_simulator'] and gn_args[
+      'target_cpu'] == 'arm64' and gn_args['dart_target_arch'] == 'arm64':
     gn_args['dart_force_simulator'] = True
 
   if args.dart_debug:

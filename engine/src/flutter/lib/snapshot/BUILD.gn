@@ -299,6 +299,13 @@ if (host_os == "mac" &&
     }
   }
 
+  # patchwing: analyze_snapshot 仅支持 64 位 AOT 构建（见 dart runtime_args.gni
+  # 的 build_analyze_snapshot 默认值，那里用 dart_target_arch 判断；本文件作用域
+  # 无 dart_target_arch，等价为默认工具链的 target_cpu）。32 位（arm/x86）target
+  # 下 dart_target_arch 会传播到 mac 子工具链，使 analyze_snapshot 目标未定义、
+  # GN 依赖解析失败；因此 32 位构建跳过 analyze_snapshot 打包目标。
+  if (target_cpu == "x64" || target_cpu == "arm64" ||
+      target_cpu == "riscv64") {
   build_mac_analyze_snapshot(
       "create_macos_analyze_snapshot_arm64_${target_cpu}") {
     host_arch = "arm64"
@@ -327,6 +334,7 @@ if (host_os == "mac" &&
       ":create_macos_analyze_snapshot_x64_${target_cpu}",
     ]
   }
+  }  # if 64-bit target (patchwing)
 }
 
 source_set("snapshot") {

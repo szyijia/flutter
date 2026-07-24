@@ -21,6 +21,16 @@ void Patchwing_SetBaseSnapshots(const uint8_t* isolate_snapshot_data,
                                 const uint8_t* vm_snapshot_data,
                                 const uint8_t* vm_snapshot_instructions);
 
+// [M3] 把 vmcode 中的 LinkTable 拷贝进 VM 全局状态（在 ReadLinkHeader
+// 之后、isolate 创建前调用；data 为整个 vmcode 映射）。成功返回 0。
+int Patchwing_SetupLinkTables(const uint8_t* data, size_t size);
+
+// Snapshot blob 的 size 访问（原版 dart 无此 API，engine 侧按 snapshot 头
+// 格式实现：magic(int32) + length(int64 LE) + kind(int64)，length 为含头总长）。
+// 对应 runtime/vm/snapshot.h 的 kMagicSize/kLengthOffset 布局。
+size_t Dart_SnapshotDataSize(const uint8_t* data);
+size_t Dart_SnapshotInstrSize(const uint8_t* data);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

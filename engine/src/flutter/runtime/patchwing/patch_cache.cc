@@ -9,6 +9,7 @@
 #include "flutter/fml/logging.h"
 #include "flutter/fml/mapping.h"
 #include "flutter/runtime/patchwing/patch_mapping.h"
+#include "flutter/runtime/patchwing/patchwing_dart_stubs.h"
 #include "third_party/dart/runtime/include/dart_api.h"
 
 namespace flutter {
@@ -38,6 +39,17 @@ std::shared_ptr<PatchCacheEntry> PatchCacheEntry::Create(
 
   int elf_file_offset = Patchwing_ReadLinkHeader(elf_mapping->GetMapping(),
                                                  elf_mapping->GetSize());
+
+  // [M3] 把 LinkTable 交给 VM 全局状态（isolate 创建前完成；
+  // VM 侧自行拷贝，不依赖本映射的生命周期）。失败时按无表继续
+  // （整个 patch 视为全模拟，仍能跑，只是慢）。
+  if (elf_file_offset >= 0 &&
+      Patchwing_SetupLinkTables(elf_mapping->GetMapping(),
+                                elf_mapping->GetSize()) != 0) {
+    FML_LOG(ERROR)
+        << "Patchwing: failed to set up link tables; patch will run "
+           "fully simulated.";
+  }
 
   const char* error = nullptr;
   // The VM Snapshot is identical for all binaries produced by a given version
