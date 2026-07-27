@@ -82,7 +82,7 @@ void SetBaseSnapshot(Settings& settings) {
       vm_insns_ptr ? Dart_SnapshotInstrSize(vm_insns_ptr) : -1;
   intptr_t iso_insns_size =
       iso_insns_ptr ? Dart_SnapshotInstrSize(iso_insns_ptr) : -1;
-  FML_LOG(INFO) << "[shorebird] SetBaseSnapshot mappings: "
+  FML_LOG(INFO) << "[patchwing] SetBaseSnapshot mappings: "
                 << "vm_data_size=" << vm_data_size
                 << " iso_data_size=" << iso_data_size
                 << " vm_insns_size=" << vm_insns_size
@@ -149,7 +149,7 @@ bool ConfigureShorebird(const ShorebirdConfigArgs& args,
   // Parse app id from patchwing.yaml
   std::string app_id = GetValueFromYaml(args.shorebird_yaml, "app_id");
   if (app_id.empty()) {
-    FML_LOG(ERROR) << "Shorebird updater: appid not found in patchwing.yaml";
+    FML_LOG(ERROR) << "Patchwing updater: appid not found in patchwing.yaml";
     return false;
   }
 
@@ -189,9 +189,9 @@ bool ConfigureShorebird(const ShorebirdConfigArgs& args,
   std::string active_path = shorebird::Updater::Instance().NextBootPatchPath();
   if (!active_path.empty()) {
     patch_path = active_path;
-    FML_LOG(INFO) << "Shorebird updater: patch path: " << patch_path;
+    FML_LOG(INFO) << "Patchwing updater: patch path: " << patch_path;
   } else {
-    FML_LOG(INFO) << "Shorebird updater: no active patch.";
+    FML_LOG(INFO) << "Patchwing updater: no active patch.";
   }
 
   // Note: shorebird_report_launch_start() is now called from TryLoadFromPatch()
@@ -203,11 +203,11 @@ bool ConfigureShorebird(const ShorebirdConfigArgs& args,
   }
 
   if (shorebird::Updater::Instance().ShouldAutoUpdate()) {
-    FML_LOG(INFO) << "Starting Shorebird update";
+    FML_LOG(INFO) << "Starting Patchwing update";
     shorebird::Updater::Instance().StartUpdateThread();
   } else {
     FML_LOG(INFO)
-        << "Shorebird auto_update disabled, not checking for updates.";
+        << "Patchwing auto_update disabled, not checking for updates.";
   }
 
   return true;
@@ -226,7 +226,7 @@ void ConfigureShorebird(std::string code_cache_path,
   // lookups will fail.  Change your Scheme to Release to fix:
   // https://github.com/flutter/flutter/wiki/Debugging-the-engine#debugging-ios-builds-with-xcode
   FML_CHECK(DartSnapshot::VMSnapshotFromSettings(settings))
-      << "XCode Scheme must be set to Release to use Shorebird";
+      << "XCode Scheme must be set to Release to use Patchwing";
 
   auto shorebird_updater_dir_name = "shorebird_updater";
 
@@ -264,7 +264,7 @@ void ConfigureShorebird(std::string code_cache_path,
   shorebird::Updater::Instance().ValidateNextBootPatch();
   std::string active_path = shorebird::Updater::Instance().NextBootPatchPath();
   if (!active_path.empty()) {
-    FML_LOG(INFO) << "Shorebird updater: active path: " << active_path;
+    FML_LOG(INFO) << "Patchwing updater: active path: " << active_path;
 
 #if SHOREBIRD_USE_INTERPRETER
     // On iOS we add the patch to the front of the list instead of clearing
@@ -277,7 +277,7 @@ void ConfigureShorebird(std::string code_cache_path,
     settings.application_library_paths.emplace_back(active_path);
 #endif
   } else {
-    FML_LOG(INFO) << "Shorebird updater: no active patch.";
+    FML_LOG(INFO) << "Patchwing updater: no active patch.";
   }
 
   // Note: shorebird_report_launch_start() is now called from TryLoadFromPatch()
@@ -290,11 +290,11 @@ void ConfigureShorebird(std::string code_cache_path,
   }
 
   if (shorebird::Updater::Instance().ShouldAutoUpdate()) {
-    FML_LOG(INFO) << "Starting Shorebird update";
+    FML_LOG(INFO) << "Starting Patchwing update";
     shorebird::Updater::Instance().StartUpdateThread();
   } else {
     FML_LOG(INFO)
-        << "Shorebird auto_update disabled, not checking for updates.";
+        << "Patchwing auto_update disabled, not checking for updates.";
   }
 }
 

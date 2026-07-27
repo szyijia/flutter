@@ -227,7 +227,7 @@ public class FlutterJNI {
         versionCode = String.valueOf(packageInfo.versionCode);
       }
     } catch (PackageManager.NameNotFoundException e) {
-      Log.e(TAG, "Failed to read app version.  Shorebird updater can't run.", e);
+      Log.e(TAG, "Failed to read app version. Patchwing updater can't run.", e);
     }
 
     String shorebirdYaml = null;

@@ -95,7 +95,7 @@ std::unique_ptr<SnapshotsDataHandle> SnapshotsDataHandle::createForSnapshots(
   // patch against. Logged at every patch-apply attempt so customer syslogs
   // include the exact sizes the bipatch state machine sees — directly
   // comparable to the host's `aot_tools dump_blobs` extraction.
-  FML_LOG(INFO) << "[shorebird] SnapshotsDataHandle blob sizes: vm_data="
+  FML_LOG(INFO) << "[patchwing] SnapshotsDataHandle blob sizes: vm_data="
                 << vm_data->GetSize() << "b iso_data=" << iso_data->GetSize()
                 << "b vm_instructions=" << vm_insns->GetSize()
                 << "b iso_instructions=" << iso_insns->GetSize() << "b total="
