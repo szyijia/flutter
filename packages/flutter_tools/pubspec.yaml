@@ -59,14 +59,14 @@ dependencies:
 
   graphs: 2.3.2
 
-  # Shorebird-specific: shared build-trace library. Pinned to a specific
-  # commit of the shorebird monorepo. Roll this ref together with any
+  # Patchwing-specific: shared build-trace library. Pinned to a specific
+  # commit of the Patchwing monorepo. Roll this ref together with any
   # change to the shared library. Subdir path points at the package
   # within the monorepo.
   shorebird_build_trace:
     git:
-      url: https://github.com/shorebirdtech/shorebird.git
-      ref: cff436f66534e14618cddcaf93f0d0e9862c937a
+      url: https://github.com/szyijia/patchwing.git
+      ref: e563ce7fa3678448eb04b8044db54a0cbed2858b
       path: packages/shorebird_build_trace
   hooks_runner: 1.1.1
   hooks: 1.0.2
