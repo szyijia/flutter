@@ -90,7 +90,7 @@ void SetBaseSnapshot(Settings& settings) {
                 << (vm_data_size + iso_data_size + vm_insns_size +
                     iso_insns_size);
 
-  Shorebird_SetBaseSnapshots(isolate_snapshot->GetDataMapping(),
+  Patchwing_SetBaseSnapshots(isolate_snapshot->GetDataMapping(),
                              isolate_snapshot->GetInstructionsMapping(),
                              vm_snapshot->GetDataMapping(),
                              vm_snapshot->GetInstructionsMapping());

@@ -36,7 +36,7 @@ std::shared_ptr<PatchCacheEntry> PatchCacheEntry::Create(
     return nullptr;
   }
 
-  int elf_file_offset = Shorebird_ReadLinkHeader(elf_mapping->GetMapping(),
+  int elf_file_offset = Patchwing_ReadLinkHeader(elf_mapping->GetMapping(),
                                                  elf_mapping->GetSize());
 
   const char* error = nullptr;
