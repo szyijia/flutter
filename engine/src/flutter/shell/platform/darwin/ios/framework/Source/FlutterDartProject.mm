@@ -165,9 +165,9 @@ flutter::Settings FLTDefaultSettingsForBundle(NSBundle* bundle, NSProcessInfo* p
   // See
   // https://developer.apple.com/library/archive/documentation/FileManagement/Conceptual/FileSystemProgrammingGuide/FileSystemOverview/FileSystemOverview.html#//apple_ref/doc/uid/TP40010672-CH2-SW13
   // /private/var/mobile/Containers/Data/Application/264477BF-6E38-47C9-AAD9-532BB842F197/Library/Application
-  // Support/shorebird/shorebird_updater
+  // Support/patchwing/patchwing_updater
   std::string cache_path =
-      fml::paths::JoinPaths({getenv("HOME"), "Library/Application Support/shorebird"});
+      fml::paths::JoinPaths({getenv("HOME"), "Library/Application Support/patchwing"});
   NSURL* shorebirdYamlPath = [NSURL URLWithString:@"patchwing.yaml"
                                     relativeToURL:[NSURL fileURLWithPath:assetsPath]];
   NSString* appVersion = [mainBundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"];

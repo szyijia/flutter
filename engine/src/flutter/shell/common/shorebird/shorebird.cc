@@ -144,7 +144,7 @@ std::string GetValueFromYaml(const std::string& yaml, const std::string& key) {
 bool ConfigureShorebird(const ShorebirdConfigArgs& args,
                         std::string& patch_path) {
   patch_path = args.release_app_library_path;
-  auto shorebird_updater_dir_name = "shorebird_updater";
+  auto shorebird_updater_dir_name = "patchwing_updater";
 
   // Parse app id from patchwing.yaml
   std::string app_id = GetValueFromYaml(args.shorebird_yaml, "app_id");
@@ -228,7 +228,7 @@ void ConfigureShorebird(std::string code_cache_path,
   FML_CHECK(DartSnapshot::VMSnapshotFromSettings(settings))
       << "XCode Scheme must be set to Release to use Patchwing";
 
-  auto shorebird_updater_dir_name = "shorebird_updater";
+  auto shorebird_updater_dir_name = "patchwing_updater";
 
   auto code_cache_dir = fml::paths::JoinPaths(
       {std::move(code_cache_path), shorebird_updater_dir_name});

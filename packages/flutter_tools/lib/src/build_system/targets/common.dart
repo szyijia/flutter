@@ -519,7 +519,7 @@ abstract final class LinkSupplement {
   }) async {
     // If the shorebird directory exists, delete it first.
     final Directory shorebirdDir = environment.fileSystem.directory(
-      environment.fileSystem.path.join(outputBuildDir, 'shorebird'),
+      environment.fileSystem.path.join(outputBuildDir, 'patchwing'),
     );
     if (shorebirdDir.existsSync()) {
       shorebirdDir.deleteSync(recursive: true);

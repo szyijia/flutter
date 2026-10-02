@@ -115,7 +115,7 @@ class IosBuildTraceSession {
     final String assembleTrace = _fs.path.join(
       _fs.currentDirectory.path,
       _buildDirectoryPath,
-      'shorebird_assemble_trace.json',
+      'patchwing_assemble_trace.json',
     );
     _assembleTraceFilePath = assembleTrace;
     // Naming the env var SHOREBIRD_TRACE_FILE avoids squatting on an
