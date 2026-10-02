@@ -199,7 +199,7 @@ class IosBuildTraceSession {
       )
       ..writeToFile(_fs.file(_tracePath));
     printStatus(
-      'Shorebird build trace written to $_tracePath. '
+      'Patchwing build trace written to $_tracePath. '
       'View at https://ui.perfetto.dev',
     );
     BuildTracer.stop();

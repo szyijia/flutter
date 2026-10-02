@@ -120,8 +120,8 @@ class AssembleCommand extends FlutterCommand {
     argParser.addOption(
       'shorebird-trace-file',
       help:
-          'Output a Shorebird build trace in Chrome Trace Event Format '
-          'JSON. Shorebird-specific; used by the build-trace plumbing in '
+          'Output a Patchwing build trace in Chrome Trace Event Format '
+          'JSON. Patchwing-specific; used by the build-trace plumbing in '
           'gradle.dart / mac.dart to collect flutter-assemble timings.',
     );
     argParser.addMultiOption(
