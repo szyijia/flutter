@@ -667,7 +667,13 @@ config("runtime_library") {
     }
     # libunwind.a is located in the respective android cpu subdirectories.
     # The clang version needs to match the version in the lib_dirs line above.
-    lib_dirs += [ "${android_toolchain_root}/lib/clang/19/lib/linux/${current_android_cpu}/" ]
+    android_unwind_cpu = current_android_cpu
+    if (current_cpu == "x86") {
+      # NDK r28 names the unwind directory i386, but compiler-rt builtins
+      # still use i686. Keep their architecture names separate.
+      android_unwind_cpu = "i386"
+    }
+    lib_dirs += [ "${android_toolchain_root}/lib/clang/19/lib/linux/${android_unwind_cpu}/" ]
     libs += [ "clang_rt.builtins-${current_android_cpu}-android" ]
   }
 
