@@ -11,6 +11,6 @@ source_set("patch_cache") {
   deps = [
     "//flutter/fml",
     "//flutter/runtime:libdart",
-    "//flutter/shell/common/shorebird:updater",
+    "//flutter/shell/common/patchwing:updater",
   ]
 }

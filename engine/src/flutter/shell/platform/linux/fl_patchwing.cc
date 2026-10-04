@@ -1,4 +1,4 @@
-#include "flutter/shell/platform/linux/fl_shorebird.h"
+#include "flutter/shell/platform/linux/fl_patchwing.h"
 
 #include <fstream>
 #include <sstream>
@@ -7,7 +7,7 @@
 #include "flutter/fml/file.h"
 #include "flutter/fml/logging.h"
 #include "flutter/fml/paths.h"
-#include "flutter/shell/common/shorebird/shorebird.h"
+#include "flutter/shell/common/patchwing/patchwing.h"
 #include "rapidjson/document.h"
 #include "third_party/tonic/filesystem/filesystem/file.h"
 

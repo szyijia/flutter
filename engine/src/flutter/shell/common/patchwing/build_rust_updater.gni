@@ -79,7 +79,7 @@ if (shorebird_updater_supported) {
 
   # Glob all .rs source files so the input list stays in sync automatically.
   shorebird_updater_rs_sources =
-      exec_script("//flutter/shell/common/shorebird/list_rust_files.py",
+      exec_script("//flutter/shell/common/patchwing/list_rust_files.py",
                   [ rebase_path("$shorebird_updater_dir/library/src",
                                 root_build_dir) ],
                   "list lines")

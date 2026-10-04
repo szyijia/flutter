@@ -47,7 +47,7 @@
 #include "third_party/skia/include/core/SkGraphics.h"
 #include "third_party/tonic/common/log.h"
 
-#include "flutter/shell/common/shorebird/updater.h"
+#include "flutter/shell/common/patchwing/updater.h"
 
 namespace flutter {
 

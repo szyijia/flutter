@@ -9,7 +9,7 @@
 
 #include "flutter/fml/macros.h"
 #include "flutter/fml/mapping.h"
-#include "flutter/runtime/shorebird/patch_cache.h"
+#include "flutter/runtime/patchwing/patch_cache.h"
 
 namespace flutter {
 

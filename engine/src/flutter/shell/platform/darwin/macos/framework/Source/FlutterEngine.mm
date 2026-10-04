@@ -12,7 +12,7 @@
 
 #include "flutter/common/constants.h"
 #include "flutter/fml/paths.h"
-#include "flutter/shell/common/shorebird/shorebird.h"
+#include "flutter/shell/common/patchwing/patchwing.h"
 #include "flutter/shell/platform/common/app_lifecycle_state.h"
 #include "flutter/shell/platform/common/engine_switches.h"
 #include "flutter/shell/platform/embedder/embedder.h"

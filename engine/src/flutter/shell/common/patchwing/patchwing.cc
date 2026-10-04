@@ -1,5 +1,5 @@
 
-#include "flutter/shell/common/shorebird/shorebird.h"
+#include "flutter/shell/common/patchwing/patchwing.h"
 
 #include <cstddef>
 #include <memory>
@@ -18,8 +18,8 @@
 #include "flutter/runtime/dart_snapshot.h"
 #include "flutter/runtime/dart_vm.h"
 #include "flutter/shell/common/shell.h"
-#include "flutter/shell/common/shorebird/snapshots_data_handle.h"
-#include "flutter/shell/common/shorebird/updater.h"
+#include "flutter/shell/common/patchwing/snapshots_data_handle.h"
+#include "flutter/shell/common/patchwing/updater.h"
 #include "flutter/shell/common/switches.h"
 #include "fml/logging.h"
 #include "shell/platform/embedder/embedder.h"
@@ -195,7 +195,7 @@ bool ConfigureShorebird(const ShorebirdConfigArgs& args,
   }
 
   // Note: shorebird_report_launch_start() is now called from TryLoadFromPatch()
-  // in runtime/shorebird/patch_cache.cc, right before the patched snapshot is
+  // in runtime/patchwing/patch_cache.cc, right before the patched snapshot is
   // actually loaded. This fixes issues with FlutterEngineGroup and other cases
   // where ConfigureShorebird() is called but no Shell is created.
   if (!init_result) {
@@ -281,7 +281,7 @@ void ConfigureShorebird(std::string code_cache_path,
   }
 
   // Note: shorebird_report_launch_start() is now called from TryLoadFromPatch()
-  // in runtime/shorebird/patch_cache.cc, right before the patched snapshot is
+  // in runtime/patchwing/patch_cache.cc, right before the patched snapshot is
   // actually loaded. This fixes issues with FlutterEngineGroup and other cases
   // where ConfigureShorebird() is called but no Shell is created.
 

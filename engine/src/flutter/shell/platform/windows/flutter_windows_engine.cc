@@ -18,7 +18,7 @@
 #include "flutter/fml/paths.h"
 #include "flutter/fml/platform/win/wstring_conversion.h"
 #include "flutter/fml/synchronization/waitable_event.h"
-#include "flutter/shell/common/shorebird/shorebird.h"
+#include "flutter/shell/common/patchwing/patchwing.h"
 #include "flutter/shell/platform/common/client_wrapper/binary_messenger_impl.h"
 #include "flutter/shell/platform/common/client_wrapper/include/flutter/standard_message_codec.h"
 #include "flutter/shell/platform/common/path_utils.h"

@@ -1,5 +1,5 @@
 import("//flutter/common/config.gni")
-import("//flutter/shell/common/shorebird/build_rust_updater.gni")
+import("//flutter/shell/common/patchwing/build_rust_updater.gni")
 import("//flutter/testing/testing.gni")
 
 if (is_ios || is_mac) {
@@ -22,7 +22,7 @@ source_set("snapshots_data_handle") {
 
 if (shorebird_updater_supported) {
   action("build_rust_updater") {
-    script = "//flutter/shell/common/shorebird/build_rust_updater.py"
+    script = "//flutter/shell/common/patchwing/build_rust_updater.py"
 
     # The stamp file gives Ninja a deterministic output to depend on, but
     # we also have to declare the actual static library so consumers
@@ -119,8 +119,8 @@ source_set("updater") {
 
 source_set("shorebird") {
   sources = [
-    "shorebird.cc",
-    "shorebird.h",
+    "patchwing.cc",
+    "patchwing.h",
   ]
 
   deps = [
@@ -144,7 +144,7 @@ if (enable_unittests) {
 
     sources = [
       "patch_cache_unittests.cc",
-      "shorebird_unittests.cc",
+      "patchwing_unittests.cc",
       "snapshots_data_handle_unittests.cc",
       "updater_unittests.cc",
     ]
@@ -155,7 +155,7 @@ if (enable_unittests) {
       ":snapshots_data_handle",
       ":updater",
       "//flutter/runtime",
-      "//flutter/runtime/shorebird:patch_cache",
+      "//flutter/runtime/patchwing:patch_cache",
       "//flutter/testing",
       "//flutter/testing:fixture_test",
     ]

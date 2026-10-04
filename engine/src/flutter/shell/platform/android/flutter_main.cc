@@ -20,7 +20,7 @@
 #include "flutter/fml/platform/android/paths_android.h"
 #include "flutter/lib/ui/plugins/callback_cache.h"
 #include "flutter/runtime/dart_vm.h"
-#include "flutter/shell/common/shorebird/shorebird.h"
+#include "flutter/shell/common/patchwing/patchwing.h"
 #include "flutter/shell/common/switches.h"
 #include "flutter/shell/platform/android/android_context_vk_impeller.h"
 #include "flutter/shell/platform/android/android_rendering_selector.h"

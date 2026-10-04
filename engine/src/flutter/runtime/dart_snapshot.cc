@@ -15,9 +15,9 @@
 #include "third_party/dart/runtime/include/dart_api.h"
 
 #if SHOREBIRD_USE_INTERPRETER
-#include "flutter/runtime/shorebird/patch_cache.h"  // nogncheck
+#include "flutter/runtime/patchwing/patch_cache.h"  // nogncheck
 #endif
-#include "flutter/shell/common/shorebird/updater.h"  // nogncheck
+#include "flutter/shell/common/patchwing/updater.h"  // nogncheck
 
 namespace flutter {
 

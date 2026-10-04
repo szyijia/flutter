@@ -14,7 +14,7 @@
 #include "flutter/common/constants.h"
 #include "flutter/fml/build_config.h"
 #include "flutter/fml/paths.h"
-#include "flutter/shell/common/shorebird/shorebird.h"
+#include "flutter/shell/common/patchwing/patchwing.h"
 #include "flutter/shell/common/switches.h"
 #import "flutter/shell/platform/darwin/common/InternalFlutterSwiftCommon/InternalFlutterSwiftCommon.h"
 #include "flutter/shell/platform/darwin/common/command_line.h"

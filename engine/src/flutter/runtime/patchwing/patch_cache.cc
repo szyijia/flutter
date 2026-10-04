@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "flutter/runtime/shorebird/patch_cache.h"
+#include "flutter/runtime/patchwing/patch_cache.h"
 
 #include <mutex>
 
 #include "flutter/fml/logging.h"
 #include "flutter/fml/mapping.h"
-#include "flutter/runtime/shorebird/patch_mapping.h"
+#include "flutter/runtime/patchwing/patch_mapping.h"
 #include "third_party/dart/runtime/include/dart_api.h"
 
 namespace flutter {
