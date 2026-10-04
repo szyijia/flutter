@@ -144,7 +144,7 @@ std::string GetValueFromYaml(const std::string& yaml, const std::string& key) {
 bool ConfigureShorebird(const ShorebirdConfigArgs& args,
                         std::string& patch_path) {
   patch_path = args.release_app_library_path;
-  auto shorebird_updater_dir_name = "patchwing_updater";
+  auto updater_dir_name = "patchwing_updater";
 
   // Parse app id from patchwing.yaml
   std::string app_id = GetValueFromYaml(args.shorebird_yaml, "app_id");
@@ -154,12 +154,12 @@ bool ConfigureShorebird(const ShorebirdConfigArgs& args,
   }
 
   auto code_cache_dir = fml::paths::JoinPaths(
-      {std::move(args.code_cache_path), shorebird_updater_dir_name, app_id});
+      {std::move(args.code_cache_path), updater_dir_name, app_id});
   auto app_storage_dir = fml::paths::JoinPaths(
-      {std::move(args.app_storage_path), shorebird_updater_dir_name, app_id});
+      {std::move(args.app_storage_path), updater_dir_name, app_id});
 
   fml::CreateDirectory(fml::paths::GetCachesDirectory(),
-                       {shorebird_updater_dir_name},
+                       {updater_dir_name},
                        fml::FilePermission::kReadWrite);
 
   // Combine version and version_code into a single string.
@@ -221,22 +221,22 @@ void ConfigureShorebird(std::string code_cache_path,
                         const std::string& shorebird_yaml,
                         const std::string& version,
                         const std::string& version_code) {
-  // If you are crashing here, you probably are running Shorebird in a Debug
+  // If you are crashing here, you probably are running Patchwing in a Debug
   // config, where the AOT snapshot won't be linked into the process, and thus
   // lookups will fail.  Change your Scheme to Release to fix:
   // https://github.com/flutter/flutter/wiki/Debugging-the-engine#debugging-ios-builds-with-xcode
   FML_CHECK(DartSnapshot::VMSnapshotFromSettings(settings))
       << "XCode Scheme must be set to Release to use Patchwing";
 
-  auto shorebird_updater_dir_name = "patchwing_updater";
+  auto updater_dir_name = "patchwing_updater";
 
   auto code_cache_dir = fml::paths::JoinPaths(
-      {std::move(code_cache_path), shorebird_updater_dir_name});
+      {std::move(code_cache_path), updater_dir_name});
   auto app_storage_dir = fml::paths::JoinPaths(
-      {std::move(app_storage_path), shorebird_updater_dir_name});
+      {std::move(app_storage_path), updater_dir_name});
 
   fml::CreateDirectory(fml::paths::GetCachesDirectory(),
-                       {shorebird_updater_dir_name},
+                       {updater_dir_name},
                        fml::FilePermission::kReadWrite);
 
   // Combine version and version_code into a single string.
