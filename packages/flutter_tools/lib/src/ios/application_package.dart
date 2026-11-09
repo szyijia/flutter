@@ -138,7 +138,7 @@ class BuildableIOSApp extends IOSApp {
     'Frameworks',
     'App.framework',
     'flutter_assets',
-    'shorebird.yaml',
+    'patchwing.yaml',
   );
 
   @override

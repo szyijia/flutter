@@ -88,14 +88,14 @@ class AndroidBuildTraceSession {
     final String assembleTrace = _fs.path.join(
       _buildDirectory.path,
       'intermediates',
-      'shorebird',
-      'shorebird_assemble_trace_$assembleTask.json',
+      'patchwing',
+      'patchwing_assemble_trace_$assembleTask.json',
     );
     final String gradleTaskTrace = _fs.path.join(
       _buildDirectory.path,
       'intermediates',
-      'shorebird',
-      'shorebird_gradle_task_trace_$assembleTask.json',
+      'patchwing',
+      'patchwing_gradle_task_trace_$assembleTask.json',
     );
     final String initScript = _fs.path.join(
       Cache.flutterRoot!,
@@ -202,7 +202,7 @@ class AndroidBuildTraceSession {
       )
       ..writeToFile(_fs.file(_tracePath));
     printStatus(
-      'Shorebird build trace written to $_tracePath. '
+      'Patchwing build trace written to $_tracePath. '
       'View at https://ui.perfetto.dev',
     );
     BuildTracer.stop();

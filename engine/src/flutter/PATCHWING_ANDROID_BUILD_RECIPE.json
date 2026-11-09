@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "android_stripped_symbols": false,
+  "recipe_reference": "ci/builders/linux_android_aot_engine.json",
+  "gn_default_reference": "tools/gn",
+  "distribution": "Original symbol-bearing libflutter.so in runtime and ABI Maven archives; AGP extracts symbols during developer release packaging.",
+  "acceptance": "GN false, native SYMTAB present, runtime/Maven native byte parity, standard public cold release, signed package, installed-app patch and rollback."
+}

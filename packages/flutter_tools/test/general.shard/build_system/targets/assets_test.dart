@@ -244,7 +244,7 @@ flutter:
     },
   );
 
-  group('CopyAssets compiles shorebird.yaml using the environment flavor', () {
+  group('CopyAssets compiles patchwing.yaml using the environment flavor', () {
     const shorebirdYamlContents = '''
 app_id: base-app-id
 flavors:
@@ -259,9 +259,9 @@ flavors:
 name: example
 flutter:
   assets:
-    - shorebird.yaml
+    - patchwing.yaml
 ''');
-      fileSystem.file('shorebird.yaml')
+      fileSystem.file('patchwing.yaml')
         ..createSync()
         ..writeAsStringSync(shorebirdYamlContents);
       writePackageConfigFiles(directory: globals.fs.currentDirectory, mainLibName: 'example');
@@ -275,7 +275,7 @@ flutter:
         await const CopyAssets().build(environment);
 
         final File compiled = fileSystem.file(
-          '${environment.buildDir.path}/flutter_assets/shorebird.yaml',
+          '${environment.buildDir.path}/flutter_assets/patchwing.yaml',
         );
         expect(compiled.readAsStringSync(), 'app_id: base-app-id');
       },
@@ -294,7 +294,7 @@ flutter:
         await const CopyAssets().build(environment);
 
         final File compiled = fileSystem.file(
-          '${environment.buildDir.path}/flutter_assets/shorebird.yaml',
+          '${environment.buildDir.path}/flutter_assets/patchwing.yaml',
         );
         expect(compiled.readAsStringSync(), 'app_id: internal-app-id');
       },

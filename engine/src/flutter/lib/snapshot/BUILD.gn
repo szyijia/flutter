@@ -8,6 +8,7 @@ import("//flutter/common/config.gni")
 import("//flutter/impeller/tools/impeller.gni")
 import("//flutter/lib/snapshot/gen_snapshot.gni")
 import("//flutter/lib/ui/dart_ui.gni")
+import("$dart_src/runtime/runtime_args.gni")
 import("$dart_src/utils/compile_platform.gni")
 
 if (is_fuchsia) {
@@ -35,10 +36,10 @@ group("generate_snapshot_bins") {
   if (host_os == "mac" &&
       (target_os == "mac" || target_os == "ios" || target_os == "android")) {
     # For macOS target builds: needed for both target CPUs (arm64, x64).
-    public_deps += [
-      ":create_macos_analyze_snapshots",
-      ":create_macos_gen_snapshots",
-    ]
+    public_deps += [ ":create_macos_gen_snapshots" ]
+    if (build_analyze_snapshot) {
+      public_deps += [ ":create_macos_analyze_snapshots" ]
+    }
   } else if (host_os == "mac" &&
              (target_cpu == "arm" || target_cpu == "arm64")) {
     # For iOS, Android target builds: all AOT target CPUs are arm/arm64.
@@ -51,9 +52,10 @@ group("generate_snapshot_bins") {
 
   # Build analyze_snapshot for 64-bit target CPUs on linux.
   # Or always targeting arm64 for Shorebird builds.
-  if ((host_os == "linux" &&
-       (target_cpu == "x64" || target_cpu == "riscv64")) ||
-      target_cpu == "arm64") {
+  if (build_analyze_snapshot &&
+      ((host_os == "linux" &&
+        (target_cpu == "x64" || target_cpu == "riscv64")) ||
+       target_cpu == "arm64")) {
     public_deps += [ "$dart_src/runtime/bin:analyze_snapshot($host_toolchain)" ]
   }
 }
@@ -262,7 +264,13 @@ if (host_os == "mac" &&
       ":create_macos_gen_snapshot_x64${gen_snapshot_suffix}",
     ]
   }
+}
 
+# Dart's analyzer is a 64-bit AOT tool, unlike gen_snapshot. Use its own
+# capability declaration so ARM32 builds never declare a nonexistent target.
+if (host_os == "mac" &&
+    (target_os == "mac" || target_os == "ios" || target_os == "android") &&
+    build_analyze_snapshot) {
   # Added by shorebird.
   # analyze_snapshot targets below were copied from the gen_snapshot targets
   # above to allow us to include analyze_snapshot in the artifacts generated

@@ -1074,10 +1074,10 @@ abstract class FlutterCommand extends Command<void> {
       help:
           'Output a Chrome Trace Event Format JSON file for build '
           'profiling. The resulting file can be viewed at '
-          'https://ui.perfetto.dev. Shorebird-specific; named to avoid '
+          'https://ui.perfetto.dev. Patchwing-specific; named to avoid '
           'colliding with any future upstream trace option.',
       hide: hide,
-      valueHelp: 'path/to/shorebird-trace.json',
+      valueHelp: 'path/to/patchwing-trace.json',
     );
   }
 

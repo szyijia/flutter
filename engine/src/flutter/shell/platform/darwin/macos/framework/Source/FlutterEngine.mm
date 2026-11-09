@@ -12,7 +12,7 @@
 
 #include "flutter/common/constants.h"
 #include "flutter/fml/paths.h"
-#include "flutter/shell/common/shorebird/shorebird.h"
+#include "flutter/shell/common/patchwing/patchwing.h"
 #include "flutter/shell/platform/common/app_lifecycle_state.h"
 #include "flutter/shell/platform/common/engine_switches.h"
 #include "flutter/shell/platform/embedder/embedder.h"
@@ -665,7 +665,7 @@ static void SetThreadPriority(FlutterThreadPriority priority) {
                                    URLByAppendingPathComponent:@"App.framework"]] bundlePath];
   bundlePath = [bundlePath stringByAppendingString:@"/App"];
   NSString* assetsPath = _project.assetsPath;
-  NSURL* shorebirdYamlPath = [NSURL URLWithString:@"shorebird.yaml"
+  NSURL* shorebirdYamlPath = [NSURL URLWithString:@"patchwing.yaml"
                                     relativeToURL:[NSURL fileURLWithPath:assetsPath]];
   NSString* shorebirdYamlContents = [NSString stringWithContentsOfURL:shorebirdYamlPath
                                                              encoding:NSUTF8StringEncoding

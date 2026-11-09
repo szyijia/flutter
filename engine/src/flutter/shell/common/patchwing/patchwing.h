@@ -50,7 +50,7 @@ void ConfigureShorebird(std::string code_cache_path,
                         const std::string& version,
                         const std::string& version_code);
 
-/// Used for reading app_id from shorebird.yaml.
+/// Used for reading app_id from patchwing.yaml.
 /// Exposed for testing.
 std::string GetValueFromYaml(const std::string& yaml, const std::string& key);
 

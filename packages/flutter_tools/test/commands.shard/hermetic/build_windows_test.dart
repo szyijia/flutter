@@ -1224,7 +1224,7 @@ No file or variants found for asset: images/a_dot_burr.jpeg.
   );
 
   testUsingContext(
-    'shorebird.yaml is updated when SHOREBIRD_PUBLIC_KEY env var is set',
+    'patchwing.yaml is updated when SHOREBIRD_PUBLIC_KEY env var is set',
     () async {
       final FakeVisualStudio fakeVisualStudio = FakeVisualStudio();
       final BuildWindowsCommand command = BuildWindowsCommand(
@@ -1233,7 +1233,7 @@ No file or variants found for asset: images/a_dot_burr.jpeg.
       )..visualStudioOverride = fakeVisualStudio;
       setUpMockProjectFilesForBuild();
       final File shorebirdYamlFile =
-          fileSystem.file(r'build\windows\x64\runner\Release\data\flutter_assets\shorebird.yaml')
+          fileSystem.file(r'build\windows\x64\runner\Release\data\flutter_assets\patchwing.yaml')
             ..createSync(recursive: true)
             ..writeAsStringSync('app_id: my-app-id');
 
@@ -1256,7 +1256,7 @@ No file or variants found for asset: images/a_dot_burr.jpeg.
       Platform: () => windowsPlatformWithPublicKey,
       FeatureFlags: () => TestFeatureFlags(isWindowsEnabled: true),
     },
-    // SHOREBIRD_PUBLIC_KEY → shorebird.yaml injection happens inside the
+    // SHOREBIRD_PUBLIC_KEY → patchwing.yaml injection happens inside the
     // assets build target, which the mocked FakeProcessManager build
     // commands don't drive. Same situation as the macOS analogue; skip
     // until we test updateShorebirdYaml directly.

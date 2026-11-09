@@ -772,7 +772,7 @@ void main() {
   );
 
   testUsingContext(
-    'ReleaseIosApplicationBundle compiles shorebird.yaml using the flavor app_id',
+    'ReleaseIosApplicationBundle compiles patchwing.yaml using the flavor app_id',
     () async {
       environment.defines[kBuildMode] = 'release';
       environment.defines[kXcodeAction] = 'install';
@@ -784,10 +784,10 @@ void main() {
 name: example
 flutter:
   assets:
-    - shorebird.yaml
+    - patchwing.yaml
 ''');
 
-      fileSystem.file('shorebird.yaml')
+      fileSystem.file('patchwing.yaml')
         ..createSync()
         ..writeAsStringSync('''
 app_id: base-app-id
@@ -830,7 +830,7 @@ flavors:
 
       final File compiledYaml = frameworkDirectory
           .childDirectory('flutter_assets')
-          .childFile('shorebird.yaml');
+          .childFile('patchwing.yaml');
       expect(compiledYaml.readAsStringSync(), 'app_id: internal-app-id');
     },
     overrides: <Type, Generator>{

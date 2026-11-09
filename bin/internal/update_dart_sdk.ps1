@@ -41,7 +41,7 @@ if ((Test-Path $engineStamp) -and ($engineVersion -eq (Get-Content $engineStamp)
 
 $dartSdkBaseUrl = $Env:FLUTTER_STORAGE_BASE_URL
 if (-not $dartSdkBaseUrl) {
-    $dartSdkBaseUrl = "https://download.shorebird.dev"
+    $dartSdkBaseUrl = "https://cdn.patchwing.net/patchwing/branded-v2"
 }
 if ($engineRealm) {
     $dartSdkBaseUrl = "$dartSdkBaseUrl/$engineRealm"

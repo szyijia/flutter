@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "flutter/runtime/shorebird/patch_cache.h"
+#include "flutter/runtime/patchwing/patch_cache.h"
 
 #include <mutex>
 
 #include "flutter/fml/logging.h"
 #include "flutter/fml/mapping.h"
-#include "flutter/runtime/shorebird/patch_mapping.h"
+#include "flutter/runtime/patchwing/patch_mapping.h"
 #include "third_party/dart/runtime/include/dart_api.h"
 
 namespace flutter {
@@ -36,7 +36,7 @@ std::shared_ptr<PatchCacheEntry> PatchCacheEntry::Create(
     return nullptr;
   }
 
-  int elf_file_offset = Shorebird_ReadLinkHeader(elf_mapping->GetMapping(),
+  int elf_file_offset = Patchwing_ReadLinkHeader(elf_mapping->GetMapping(),
                                                  elf_mapping->GetSize());
 
   const char* error = nullptr;

@@ -15,7 +15,7 @@ void updateShorebirdYaml(
 }) {
   final File shorebirdYaml = globals.fs.file(shorebirdYamlPath);
   if (!shorebirdYaml.existsSync()) {
-    throw Exception('shorebird.yaml not found at $shorebirdYamlPath');
+    throw Exception('patchwing.yaml not found at $shorebirdYamlPath');
   }
   final YamlDocument input = loadYamlDocument(shorebirdYaml.readAsStringSync());
   final YamlMap yamlMap = input.contents as YamlMap;
@@ -36,18 +36,18 @@ String appIdForFlavor(YamlMap yamlMap, {required String? flavor}) {
   if (flavor == null || flavor.isEmpty) {
     final String? defaultAppId = yamlMap['app_id'] as String?;
     if (defaultAppId == null || defaultAppId.isEmpty) {
-      throw Exception('Cannot find "app_id" in shorebird.yaml');
+      throw Exception('Cannot find "app_id" in patchwing.yaml');
     }
     return defaultAppId;
   }
 
   final YamlMap? yamlFlavors = yamlMap['flavors'] as YamlMap?;
   if (yamlFlavors == null) {
-    throw Exception('Cannot find "flavors" in shorebird.yaml.');
+    throw Exception('Cannot find "flavors" in patchwing.yaml.');
   }
   final String? flavorAppId = yamlFlavors[flavor] as String?;
   if (flavorAppId == null || flavorAppId.isEmpty) {
-    throw Exception('Cannot find "app_id" for $flavor in shorebird.yaml');
+    throw Exception('Cannot find "app_id" for $flavor in patchwing.yaml');
   }
   return flavorAppId;
 }

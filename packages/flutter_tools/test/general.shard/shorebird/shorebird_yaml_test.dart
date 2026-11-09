@@ -94,7 +94,7 @@ base_url: https://example.com
 ''';
       // Make a temporary file to test editing in place.
       final Directory tempDir = Directory.systemTemp.createTempSync('shorebird_yaml_test.');
-      final File tempFile = File('${tempDir.path}/shorebird.yaml');
+      final File tempFile = File('${tempDir.path}/patchwing.yaml');
       tempFile.writeAsStringSync(yamlContents);
       updateShorebirdYaml(
         'foo',

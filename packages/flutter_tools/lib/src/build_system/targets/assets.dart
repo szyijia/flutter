@@ -187,7 +187,7 @@ Future<Depfile> copyAssets(
           }
           if (doCopy) {
             await (content.file as File).copy(file.path);
-            if (file.basename == 'shorebird.yaml') {
+            if (file.basename == 'patchwing.yaml') {
               try {
                 updateShorebirdYaml(
                   environment.defines[kFlavor],

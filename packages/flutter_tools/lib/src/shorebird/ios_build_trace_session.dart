@@ -115,7 +115,7 @@ class IosBuildTraceSession {
     final String assembleTrace = _fs.path.join(
       _fs.currentDirectory.path,
       _buildDirectoryPath,
-      'shorebird_assemble_trace.json',
+      'patchwing_assemble_trace.json',
     );
     _assembleTraceFilePath = assembleTrace;
     // Naming the env var SHOREBIRD_TRACE_FILE avoids squatting on an
@@ -199,7 +199,7 @@ class IosBuildTraceSession {
       )
       ..writeToFile(_fs.file(_tracePath));
     printStatus(
-      'Shorebird build trace written to $_tracePath. '
+      'Patchwing build trace written to $_tracePath. '
       'View at https://ui.perfetto.dev',
     );
     BuildTracer.stop();

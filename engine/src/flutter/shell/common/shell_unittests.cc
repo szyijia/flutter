@@ -53,7 +53,7 @@
 #include "third_party/skia/include/gpu/ganesh/mock/GrMockTypes.h"
 #include "third_party/tonic/converter/dart_converter.h"
 
-#include "flutter/shell/common/shorebird/updater.h"
+#include "flutter/shell/common/patchwing/updater.h"
 
 #ifdef SHELL_ENABLE_VULKAN
 #include "flutter/vulkan/vulkan_application.h"  // nogncheck

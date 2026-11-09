@@ -1,5 +1,5 @@
 
-#include "flutter/shell/common/shorebird/shorebird.h"
+#include "flutter/shell/common/patchwing/patchwing.h"
 
 #include <cstddef>
 #include <memory>
@@ -18,8 +18,8 @@
 #include "flutter/runtime/dart_snapshot.h"
 #include "flutter/runtime/dart_vm.h"
 #include "flutter/shell/common/shell.h"
-#include "flutter/shell/common/shorebird/snapshots_data_handle.h"
-#include "flutter/shell/common/shorebird/updater.h"
+#include "flutter/shell/common/patchwing/snapshots_data_handle.h"
+#include "flutter/shell/common/patchwing/updater.h"
 #include "flutter/shell/common/switches.h"
 #include "fml/logging.h"
 #include "shell/platform/embedder/embedder.h"
@@ -82,7 +82,7 @@ void SetBaseSnapshot(Settings& settings) {
       vm_insns_ptr ? Dart_SnapshotInstrSize(vm_insns_ptr) : -1;
   intptr_t iso_insns_size =
       iso_insns_ptr ? Dart_SnapshotInstrSize(iso_insns_ptr) : -1;
-  FML_LOG(INFO) << "[shorebird] SetBaseSnapshot mappings: "
+  FML_LOG(INFO) << "[patchwing] SetBaseSnapshot mappings: "
                 << "vm_data_size=" << vm_data_size
                 << " iso_data_size=" << iso_data_size
                 << " vm_insns_size=" << vm_insns_size
@@ -90,7 +90,7 @@ void SetBaseSnapshot(Settings& settings) {
                 << (vm_data_size + iso_data_size + vm_insns_size +
                     iso_insns_size);
 
-  Shorebird_SetBaseSnapshots(isolate_snapshot->GetDataMapping(),
+  Patchwing_SetBaseSnapshots(isolate_snapshot->GetDataMapping(),
                              isolate_snapshot->GetInstructionsMapping(),
                              vm_snapshot->GetDataMapping(),
                              vm_snapshot->GetInstructionsMapping());
@@ -144,22 +144,22 @@ std::string GetValueFromYaml(const std::string& yaml, const std::string& key) {
 bool ConfigureShorebird(const ShorebirdConfigArgs& args,
                         std::string& patch_path) {
   patch_path = args.release_app_library_path;
-  auto shorebird_updater_dir_name = "shorebird_updater";
+  auto updater_dir_name = "patchwing_updater";
 
-  // Parse app id from shorebird.yaml
+  // Parse app id from patchwing.yaml
   std::string app_id = GetValueFromYaml(args.shorebird_yaml, "app_id");
   if (app_id.empty()) {
-    FML_LOG(ERROR) << "Shorebird updater: appid not found in shorebird.yaml";
+    FML_LOG(ERROR) << "Patchwing updater: appid not found in patchwing.yaml";
     return false;
   }
 
   auto code_cache_dir = fml::paths::JoinPaths(
-      {std::move(args.code_cache_path), shorebird_updater_dir_name, app_id});
+      {std::move(args.code_cache_path), updater_dir_name, app_id});
   auto app_storage_dir = fml::paths::JoinPaths(
-      {std::move(args.app_storage_path), shorebird_updater_dir_name, app_id});
+      {std::move(args.app_storage_path), updater_dir_name, app_id});
 
   fml::CreateDirectory(fml::paths::GetCachesDirectory(),
-                       {shorebird_updater_dir_name},
+                       {updater_dir_name},
                        fml::FilePermission::kReadWrite);
 
   // Combine version and version_code into a single string.
@@ -189,13 +189,13 @@ bool ConfigureShorebird(const ShorebirdConfigArgs& args,
   std::string active_path = shorebird::Updater::Instance().NextBootPatchPath();
   if (!active_path.empty()) {
     patch_path = active_path;
-    FML_LOG(INFO) << "Shorebird updater: patch path: " << patch_path;
+    FML_LOG(INFO) << "Patchwing updater: patch path: " << patch_path;
   } else {
-    FML_LOG(INFO) << "Shorebird updater: no active patch.";
+    FML_LOG(INFO) << "Patchwing updater: no active patch.";
   }
 
   // Note: shorebird_report_launch_start() is now called from TryLoadFromPatch()
-  // in runtime/shorebird/patch_cache.cc, right before the patched snapshot is
+  // in runtime/patchwing/patch_cache.cc, right before the patched snapshot is
   // actually loaded. This fixes issues with FlutterEngineGroup and other cases
   // where ConfigureShorebird() is called but no Shell is created.
   if (!init_result) {
@@ -203,11 +203,11 @@ bool ConfigureShorebird(const ShorebirdConfigArgs& args,
   }
 
   if (shorebird::Updater::Instance().ShouldAutoUpdate()) {
-    FML_LOG(INFO) << "Starting Shorebird update";
+    FML_LOG(INFO) << "Starting Patchwing update";
     shorebird::Updater::Instance().StartUpdateThread();
   } else {
     FML_LOG(INFO)
-        << "Shorebird auto_update disabled, not checking for updates.";
+        << "Patchwing auto_update disabled, not checking for updates.";
   }
 
   return true;
@@ -221,22 +221,22 @@ void ConfigureShorebird(std::string code_cache_path,
                         const std::string& shorebird_yaml,
                         const std::string& version,
                         const std::string& version_code) {
-  // If you are crashing here, you probably are running Shorebird in a Debug
+  // If you are crashing here, you probably are running Patchwing in a Debug
   // config, where the AOT snapshot won't be linked into the process, and thus
   // lookups will fail.  Change your Scheme to Release to fix:
   // https://github.com/flutter/flutter/wiki/Debugging-the-engine#debugging-ios-builds-with-xcode
   FML_CHECK(DartSnapshot::VMSnapshotFromSettings(settings))
-      << "XCode Scheme must be set to Release to use Shorebird";
+      << "XCode Scheme must be set to Release to use Patchwing";
 
-  auto shorebird_updater_dir_name = "shorebird_updater";
+  auto updater_dir_name = "patchwing_updater";
 
   auto code_cache_dir = fml::paths::JoinPaths(
-      {std::move(code_cache_path), shorebird_updater_dir_name});
+      {std::move(code_cache_path), updater_dir_name});
   auto app_storage_dir = fml::paths::JoinPaths(
-      {std::move(app_storage_path), shorebird_updater_dir_name});
+      {std::move(app_storage_path), updater_dir_name});
 
   fml::CreateDirectory(fml::paths::GetCachesDirectory(),
-                       {shorebird_updater_dir_name},
+                       {updater_dir_name},
                        fml::FilePermission::kReadWrite);
 
   // Combine version and version_code into a single string.
@@ -264,7 +264,7 @@ void ConfigureShorebird(std::string code_cache_path,
   shorebird::Updater::Instance().ValidateNextBootPatch();
   std::string active_path = shorebird::Updater::Instance().NextBootPatchPath();
   if (!active_path.empty()) {
-    FML_LOG(INFO) << "Shorebird updater: active path: " << active_path;
+    FML_LOG(INFO) << "Patchwing updater: active path: " << active_path;
 
 #if SHOREBIRD_USE_INTERPRETER
     // On iOS we add the patch to the front of the list instead of clearing
@@ -277,11 +277,11 @@ void ConfigureShorebird(std::string code_cache_path,
     settings.application_library_paths.emplace_back(active_path);
 #endif
   } else {
-    FML_LOG(INFO) << "Shorebird updater: no active patch.";
+    FML_LOG(INFO) << "Patchwing updater: no active patch.";
   }
 
   // Note: shorebird_report_launch_start() is now called from TryLoadFromPatch()
-  // in runtime/shorebird/patch_cache.cc, right before the patched snapshot is
+  // in runtime/patchwing/patch_cache.cc, right before the patched snapshot is
   // actually loaded. This fixes issues with FlutterEngineGroup and other cases
   // where ConfigureShorebird() is called but no Shell is created.
 
@@ -290,11 +290,11 @@ void ConfigureShorebird(std::string code_cache_path,
   }
 
   if (shorebird::Updater::Instance().ShouldAutoUpdate()) {
-    FML_LOG(INFO) << "Starting Shorebird update";
+    FML_LOG(INFO) << "Starting Patchwing update";
     shorebird::Updater::Instance().StartUpdateThread();
   } else {
     FML_LOG(INFO)
-        << "Shorebird auto_update disabled, not checking for updates.";
+        << "Patchwing auto_update disabled, not checking for updates.";
   }
 }
 
