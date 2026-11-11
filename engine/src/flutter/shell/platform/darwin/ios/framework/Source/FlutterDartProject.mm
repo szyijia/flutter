@@ -41,6 +41,53 @@ static BOOL DoesHardwareSupportWideGamut() {
   return result;
 }
 
+// Returns the patch server URL from patchwing.yaml (`base_url:`), or the default server.
+static NSString* PatchwingBaseURLFromYaml(NSString* yaml) {
+  NSString* base_url = @"https://api.patchwing.net";
+  NSCharacterSet* trim = [NSCharacterSet characterSetWithCharactersInString:@" \t\"'"];
+  for (NSString* line in [yaml componentsSeparatedByCharactersInSet:NSCharacterSet
+                                                                        .newlineCharacterSet]) {
+    if (![line hasPrefix:@"base_url:"]) {
+      continue;
+    }
+    NSString* value = [[line substringFromIndex:@"base_url:".length]
+        stringByTrimmingCharactersInSet:trim];
+    if (value.length > 0) {
+      base_url = value;
+    }
+  }
+  while ([base_url hasSuffix:@"/"]) {
+    base_url = [base_url substringToIndex:base_url.length - 1];
+  }
+  return base_url;
+}
+
+// iOS only asks the user for an app's network ("Wireless Data") permission when the app uses
+// Apple's networking stack. The updater uses its own sockets, which fail with ENETDOWN until the
+// app is allowed onto the network and never trigger the prompt, so a fresh install on e.g. a
+// mainland-China iPhone would silently never receive patches. Make one lightweight URLSession
+// request to the configured patch server at launch so iOS shows the prompt.
+static void PatchwingRequestNetworkPermission(NSString* yaml) {
+  static dispatch_once_t once_token = 0;
+  dispatch_once(&once_token, ^{
+    NSURL* url = [NSURL URLWithString:[PatchwingBaseURLFromYaml(yaml)
+                                          stringByAppendingString:@"/healthz"]];
+    if (url == nil) {
+      return;
+    }
+    NSURLSessionConfiguration* configuration =
+        NSURLSessionConfiguration.ephemeralSessionConfiguration;
+    configuration.timeoutIntervalForRequest = 10;
+    NSURLSession* session = [NSURLSession sessionWithConfiguration:configuration];
+    NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:url];
+    request.HTTPMethod = @"HEAD";
+    [[session dataTaskWithRequest:request
+                completionHandler:^(NSData* data, NSURLResponse* response, NSError* error){
+                }] resume];
+    [session finishTasksAndInvalidate];
+  });
+}
+
 flutter::Settings FLTDefaultSettingsForBundle(NSBundle* bundle, NSProcessInfo* processInfoOrNil) {
   auto command_line = flutter::CommandLineFromNSProcessInfo(processInfoOrNil);
 
@@ -181,6 +228,7 @@ flutter::Settings FLTDefaultSettingsForBundle(NSBundle* bundle, NSProcessInfo* p
     //   between releases and data that does not. iOS does not make this distinction.
     flutter::ConfigureShorebird(cache_path, cache_path, settings, shorebirdYamlContents.UTF8String,
                                 appVersion.UTF8String, appBuildNumber.UTF8String);
+    PatchwingRequestNetworkPermission(shorebirdYamlContents);
   } else {
     NSLog(@"Failed to find patchwing.yaml, not starting updater.");
   }
